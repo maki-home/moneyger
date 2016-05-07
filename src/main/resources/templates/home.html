@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Title</title>
+</head>
+<body>
+<h1>Moneyger</h1>
+<p>Hello <span th:text="${user.displayName}"></span></p>
+<form th:action="@{/logout}" method="post">
+    <input type="submit" value="Logout"/>
+</form>
+
+<table border="1">
+    <tr>
+        <th>支出日</th>
+        <th>支出名</th>
+        <th>金額</th>
+        <th>支出者</th>
+    </tr>
+    <tr th:each="outcome : ${outcomes}">
+        <td th:text="${outcome.outcomeDate}"></td>
+        <td th:text="${outcome.outcomeName}"></td>
+        <td th:text="${outcome.amount}"></td>
+        <td th:text="${outcome.outcomeBy}"></td>
+    </tr>
+</table>
+
+</body>
+</html>
