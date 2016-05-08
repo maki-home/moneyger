@@ -11,6 +11,14 @@
     <input type="submit" value="Logout"/>
 </form>
 
+<form th:action="@{/outcomes}" method="post" th:object="${outcome}">
+    <input name="outcomeDate" type="date" placeholder="支出日" required="required"/>
+    <input name="outcomeName" type="text" placeholder="支出名" required="required"/>
+    <input name="amount" type="number" placeholder="金額" min="0"/>
+    <input type="submit" value="登録"/>
+</form>
+
+<h2>支出一覧</h2>
 <table border="1">
     <tr>
         <th>支出日</th>

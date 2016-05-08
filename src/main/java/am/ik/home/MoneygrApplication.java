@@ -2,27 +2,19 @@ package am.ik.home;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.apache.catalina.filters.RequestDumperFilter;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.oauth2.client.EnableOAuth2Sso;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.hateoas.Resources;
+import org.springframework.context.annotation.Profile;
 import org.springframework.hateoas.hal.Jackson2HalModule;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 
 @SpringBootApplication
 @EnableOAuth2Sso
@@ -34,31 +26,10 @@ public class MoneygrApplication extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated();
     }
 
-    @Controller
-    static class MoneygrController {
-        @Autowired
-        OAuth2RestTemplate restTemplate;
-        @Autowired
-        MoneygrUser user;
-        @Value("${inout.uri:http://localhost:7777/api}")
-        URI inoutUri;
-
-        @RequestMapping("/")
-        String index() {
-            return "index";
-        }
-
-        @RequestMapping("/home")
-        String home(Model model) {
-            Resources<Outcome> outcomes = restTemplate.exchange(
-                    RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri).pathSegment("outcomes").build().toUri()).build(),
-                    new ParameterizedTypeReference<Resources<Outcome>>() {
-                    }
-            ).getBody();
-            model.addAttribute("outcomes", outcomes);
-            model.addAttribute("user", user);
-            return "home";
-        }
+    @Profile("!cloud")
+    @Bean
+    RequestDumperFilter requestDumperFilter() {
+        return new RequestDumperFilter();
     }
 
     @Bean
