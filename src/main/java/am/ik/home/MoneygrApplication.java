@@ -1,7 +1,6 @@
 package am.ik.home;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.catalina.filters.RequestDumperFilter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.SpringApplication;
@@ -42,11 +41,6 @@ public class MoneygrApplication extends WebSecurityConfigurerAdapter {
                     ObjectMapper objectMapper = converter.getObjectMapper();
                     objectMapper.registerModule(new Jackson2HalModule());
                 });
-    }
-
-    @Bean
-    JavaTimeModule javaTimeModule() {
-        return new JavaTimeModule();
     }
 
     public static void main(String[] args) {
