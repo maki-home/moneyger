@@ -19,8 +19,6 @@ import org.springframework.util.Base64Utils;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Base64;
-import java.util.Map;
 
 @Component
 @Scope(value = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
