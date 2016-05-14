@@ -3,10 +3,17 @@
 <head>
     <meta charset="UTF-8"/>
     <title>Title</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/2.26.3/css/uikit.gradient.min.css"/>
 </head>
 <body>
-<h1>Moneyger</h1>
+<div class="uk-grid">
+    <div class="uk-width-1-5"></div>
+    <div class="uk-width-3-5">
+        <h1>Moneyger</h1>
 
-<a th:href="@{/home}">Login</a>
+        <a class="uk-button" th:href="@{/home}">Login</a>
+    </div>
+    <div class="uk-width-1-5"></div>
+</div>
 </body>
 </html>
