@@ -31,10 +31,16 @@
                 <th>支出者</th>
             </tr>
             <tr th:each="outcome : ${outcomes}">
-                <td th:text="${outcome.outcomeDate}"></td>
+                <td><a th:href="@{'/outcomes/' + ${outcome.outcomeDate}}" th:text="${outcome.outcomeDate}"></a></td>
                 <td th:text="${outcome.outcomeName}"></td>
                 <td th:text="${outcome.amount}"></td>
                 <td><a th:href="@{'/members/' + ${outcome.outcomeBy}}" th:text="${outcome.memberName}"></a></td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <th>計</th>
+                <td><span th:text="${total}"></span>円</td>
+                <td>&nbsp;</td>
             </tr>
         </table>
     </div>
