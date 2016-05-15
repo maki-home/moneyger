@@ -34,7 +34,7 @@
                 <td th:text="${outcome.outcomeDate}"></td>
                 <td th:text="${outcome.outcomeName}"></td>
                 <td th:text="${outcome.amount}"></td>
-                <td th:text="${outcome.outcomeBy}"></td>
+                <td><a th:href="@{'/members/' + ${outcome.outcomeBy}}" th:text="${outcome.memberName}"></a></td>
             </tr>
         </table>
     </div>
