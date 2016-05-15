@@ -11,14 +11,12 @@ import org.springframework.http.RequestEntity;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -72,6 +70,34 @@ public class MoneygrController {
             cat.get(key).put(node.get("categoryId").asInt(), node.get("categoryName").asText());
         }
         return cat;
+    }
+
+
+    @RequestMapping("/monthly/{outcomeDate}")
+    String monthly(Model model, @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @PathVariable LocalDate outcomeDate) {
+        List<Outcome.SummaryByDate> summaryByDate = restTemplate.exchange(
+                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
+                        .pathSegment("outcomes", "reportByDate")
+                        .queryParam("fromDate", outcomeDate.with(TemporalAdjusters.firstDayOfMonth()))
+                        .queryParam("toDate", outcomeDate.with(TemporalAdjusters.lastDayOfMonth()))
+                        .build().toUri()).build(), new ParameterizedTypeReference<List<Outcome.SummaryByDate>>() {
+                }
+        ).getBody();
+        List<Outcome.SummaryByParentCategory> summaryByParentCategory = restTemplate.exchange(
+                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
+                        .pathSegment("outcomes", "reportByParentCategory")
+                        .queryParam("fromDate", outcomeDate.with(TemporalAdjusters.firstDayOfMonth()))
+                        .queryParam("toDate", outcomeDate.with(TemporalAdjusters.lastDayOfMonth()))
+                        .build().toUri()).build(),
+                new ParameterizedTypeReference<List<Outcome.SummaryByParentCategory>>() {
+                }
+        ).getBody();
+
+        model.addAttribute("summaryByDate", summaryByDate);
+        model.addAttribute("summaryByParentCategory", summaryByParentCategory);
+        model.addAttribute("total", summaryByDate.stream().mapToLong(Outcome.SummaryByDate::getSubTotal).sum());
+        model.addAttribute("user", user);
+        return "monthly";
     }
 
 

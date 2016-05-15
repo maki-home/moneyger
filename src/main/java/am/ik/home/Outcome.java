@@ -57,4 +57,17 @@ public class Outcome implements Serializable {
         private Integer parentCategoryId;
         private String parentCategoryName;
     }
+
+    @Data
+    public static class SummaryByDate implements Serializable {
+        private LocalDate outcomeDate;
+        private Long subTotal;
+    }
+
+    @Data
+    public static class SummaryByParentCategory implements Serializable {
+        private Integer parentCategoryId;
+        private String parentCategoryName;
+        private Long subTotal;
+    }
 }
