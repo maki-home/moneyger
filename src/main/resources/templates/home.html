@@ -9,16 +9,25 @@
 <div class="uk-grid">
     <div class="uk-width-1-5"></div>
     <div class="uk-width-3-5">
-        <h1>Moneyger</h1>
+        <h1><a th:href="@{/home}">Moneyger</a></h1>
         <p>Hello <span th:text="${user.displayName}"></span></p>
         <form th:action="@{/logout}" method="post">
             <button class="uk-button">Logout</button>
         </form>
-        <br />
+        <br/>
         <form th:action="@{/outcomes}" method="post" th:object="${outcome}" class="uk-panel uk-panel-box uk-form">
             <input class="uk-form" name="outcomeDate" type="date" placeholder="支出日" required="required"/>
             <input class="uk-form" name="outcomeName" type="text" placeholder="支出名" required="required"/>
             <input class="uk-form" name="amount" type="number" placeholder="金額" min="0"/>
+            <select class="uk-form" name="outcomeCategory.categoryId">
+                <option value="">--</option>
+                <optgroup th:each="categoryGroup : ${categories}"
+                          th:label="${categoryGroup.key}">
+                    <option th:each="value : ${categoryGroup.value}"
+                            th:label="${value.value}"
+                            th:value="${value.key}"></option>
+                </optgroup>
+            </select>
             <button class="uk-button uk-button-primary">登録</button>
         </form>
 
@@ -26,17 +35,22 @@
         <table class="uk-table uk-table-striped">
             <tr>
                 <th>支出日</th>
+                <th>カテゴリ</th>
                 <th>支出名</th>
                 <th>金額</th>
                 <th>支出者</th>
             </tr>
             <tr th:each="outcome : ${outcomes}">
                 <td><a th:href="@{'/outcomes/' + ${outcome.outcomeDate}}" th:text="${outcome.outcomeDate}"></a></td>
-                <td th:text="${outcome.outcomeName}"></td>
-                <td th:text="${outcome.amount}"></td>
+                <td><span th:text="${outcome.parentCategoryName}"></span>(<span
+                        th:text="${outcome.categoryName}"></span>)
+                </td>
+                <td><span th:text="${outcome.outcomeName}"></span></td>
+                <td><span th:text="${outcome.amount}"></span></td>
                 <td><a th:href="@{'/members/' + ${outcome.outcomeBy}}" th:text="${outcome.memberName}"></a></td>
             </tr>
             <tr>
+                <td>&nbsp;</td>
                 <td>&nbsp;</td>
                 <th>計</th>
                 <td><span th:text="${total}"></span>円</td>

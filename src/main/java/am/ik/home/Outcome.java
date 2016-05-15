@@ -15,6 +15,7 @@ public class Outcome implements Serializable {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate outcomeDate;
     private String outcomeBy;
+    private OutcomeCategory outcomeCategory;
 
     @Setter
     private Map<String, String> memberMap;
@@ -24,5 +25,36 @@ public class Outcome implements Serializable {
             return "System";
         }
         return this.memberMap.get(this.outcomeBy);
+    }
+
+    public Integer getCategoryId() {
+        return this.outcomeCategory == null ? null : this.outcomeCategory.getCategoryId();
+    }
+
+    public String getCategoryName() {
+        return this.outcomeCategory == null ? null : this.outcomeCategory.getCategoryName();
+    }
+
+    public Integer getParentCategoryId() {
+        ParentOutcomeCategory parent = this.outcomeCategory == null ? null : this.outcomeCategory.getParentOutcomeCategory();
+        return parent == null ? null : parent.getParentCategoryId();
+    }
+
+    public String getParentCategoryName() {
+        ParentOutcomeCategory parent = this.outcomeCategory == null ? null : this.outcomeCategory.getParentOutcomeCategory();
+        return parent == null ? null : parent.getParentCategoryName();
+    }
+
+    @Data
+    public static class OutcomeCategory implements Serializable {
+        private Integer categoryId;
+        private String categoryName;
+        private ParentOutcomeCategory parentOutcomeCategory;
+    }
+
+    @Data
+    public static class ParentOutcomeCategory implements Serializable {
+        private Integer parentCategoryId;
+        private String parentCategoryName;
     }
 }

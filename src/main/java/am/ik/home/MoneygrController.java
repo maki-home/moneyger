@@ -19,12 +19,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.time.LocalDate;
-import java.util.Map;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.Collectors;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static java.util.stream.Collectors.*;
 
 @Controller
 public class MoneygrController {
@@ -52,12 +51,29 @@ public class MoneygrController {
                 .getBody();
         Map<String, String> memberMap = StreamSupport.stream(
                 Spliterators.spliteratorUnknownSize(members.get("_embedded").get("members").elements(), Spliterator.ORDERED), false)
-                .collect(Collectors.toMap(
+                .collect(toMap(
                         node -> node.get("memberId").asText(),
                         node -> node.get("familyName").asText() + " " + node.get("givenName").asText()
                 ));
         return memberMap;
     }
+
+    Map<String, Map<Integer, String>> categories() {
+        JsonNode categories = restTemplate.exchange(
+                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
+                        .pathSegment("outcomeCategories")
+                        .build().toUri()).build(),
+                JsonNode.class)
+                .getBody();
+        Map<String, Map<Integer, String>> cat = new LinkedHashMap<>();
+        for (JsonNode node : categories.get("_embedded").get("outcomeCategories")) {
+            String key = node.get("parentOutcomeCategory").get("parentCategoryName").asText();
+            cat.computeIfAbsent(key, x -> new LinkedHashMap<>());
+            cat.get(key).put(node.get("categoryId").asInt(), node.get("categoryName").asText());
+        }
+        return cat;
+    }
+
 
     @RequestMapping("/home")
     String home(Model model) {
@@ -71,6 +87,7 @@ public class MoneygrController {
         model.addAttribute("outcomes", outcomes);
         model.addAttribute("total", outcomes.getContent().stream().mapToInt(Outcome::getAmount).sum());
         model.addAttribute("user", user);
+        model.addAttribute("categories", categories());
         return "home";
     }
 
@@ -89,6 +106,7 @@ public class MoneygrController {
         model.addAttribute("outcomes", outcomes);
         model.addAttribute("total", outcomes.getContent().stream().mapToInt(Outcome::getAmount).sum());
         model.addAttribute("user", user);
+        model.addAttribute("categories", categories());
         return "home";
     }
 
