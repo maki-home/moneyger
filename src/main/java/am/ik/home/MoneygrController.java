@@ -77,18 +77,9 @@ public class MoneygrController {
 
     @RequestMapping("/home")
     String home(Model model) {
-        Resources<Outcome> outcomes = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri).pathSegment("outcomes").build().toUri()).build(),
-                new ParameterizedTypeReference<Resources<Outcome>>() {
-                }
-        ).getBody();
-        Map<String, String> memberMap = memberMap(outcomes.getContent().stream().map(Outcome::getOutcomeBy));
-        outcomes.forEach(o -> o.setMemberMap(memberMap));
-        model.addAttribute("outcomes", outcomes);
-        model.addAttribute("total", outcomes.getContent().stream().mapToInt(Outcome::getAmount).sum());
-        model.addAttribute("user", user);
-        model.addAttribute("categories", categories());
-        return "home";
+        LocalDate now = LocalDate.now();
+        model.addAttribute("outcomeDate", now);
+        return showOutcomes(model, now);
     }
 
     @RequestMapping(path = "outcomes/{outcomeDate}")
@@ -116,6 +107,6 @@ public class MoneygrController {
                         .body(outcome),
                 new ParameterizedTypeReference<Resource<Outcome>>() {
                 });
-        return "redirect:/home";
+        return "redirect:/outcomes/" + outcome.getOutcomeDate();
     }
 }

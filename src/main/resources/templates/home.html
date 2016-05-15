@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>Title</title>
+    <title>Moneygr</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/2.26.3/css/uikit.gradient.min.css"/>
 </head>
 <body>
@@ -15,11 +15,22 @@
             <button class="uk-button">Logout</button>
         </form>
         <br/>
-        <form th:action="@{/outcomes}" method="post" th:object="${outcome}" class="uk-panel uk-panel-box uk-form">
-            <input class="uk-form" name="outcomeDate" type="date" placeholder="支出日" required="required"/>
+        <form th:action="@{/outcomes}" method="post" th:object="${outcome}"
+              class="uk-panel uk-panel-box uk-form">
+            <input class="uk-form" name="outcomeDate" type="date" placeholder="支出日" required="required"
+                   th:value="${outcomeDate}"/>
             <input class="uk-form" name="outcomeName" type="text" placeholder="支出名" required="required"/>
-            <input class="uk-form" name="amount" type="number" placeholder="金額" min="0"/>
-            <select class="uk-form" name="outcomeCategory.categoryId">
+            <input class="uk-form" name="amount" type="number" placeholder="金額" min="0" required="required"/>
+            <div class="uk-button-group">
+                <button class="uk-button uk-button-small">+8%</button>
+                <button class="uk-button uk-button-small">-8%</button>
+                <button class="uk-button uk-button-small">+5%</button>
+                <button class="uk-button uk-button-small">-5%</button>
+                <button class="uk-button uk-button-small">+10%</button>
+                <button class="uk-button uk-button-small">-10%</button>
+                <button class="uk-button uk-button-small">0%</button>
+            </div>
+            <select class="uk-form-select" name="outcomeCategory.categoryId" required="required">
                 <option value="">--</option>
                 <optgroup th:each="categoryGroup : ${categories}"
                           th:label="${categoryGroup.key}">
@@ -32,6 +43,12 @@
         </form>
 
         <h2>支出一覧</h2>
+        <ul class="uk-pagination">
+            <li class="uk-pagination-previous"><a th:href="@{'/outcomes/' + ${outcomeDate.minusDays(1)}}"
+                                                  th:text="${outcomeDate.minusDays(1)}">...</a></li>
+            <li class="uk-pagination-next"><a th:href="@{'/outcomes/' + ${outcomeDate.plusDays(1)}}"
+                                              th:text="${outcomeDate.plusDays(1)}">...</a></li>
+        </ul>
         <table class="uk-table uk-table-striped">
             <tr>
                 <th>支出日</th>
