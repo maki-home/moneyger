@@ -21,17 +21,18 @@
                    th:value="${outcomeDate}"/>
             <input class="uk-form" name="outcomeName" type="text" placeholder="支出名" required="required"
                    onblur="predict(this)"/>
-            <input class="uk-form" name="amount" type="number" placeholder="単価" min="0" required="required"/>
+            <input class="uk-form" name="amount" type="number" placeholder="単価" min="0" required="required"
+                   onblur="setCalcState(this)"/>
             <input class="uk-form" name="quantity" type="number" placeholder="数量" min="0" value="1"
                    required="required"/>
             <div class="uk-button-group">
-                <button class="uk-button uk-button-small">+8%</button>
-                <button class="uk-button uk-button-small">-8%</button>
-                <button class="uk-button uk-button-small">+5%</button>
-                <button class="uk-button uk-button-small">-5%</button>
-                <button class="uk-button uk-button-small">+10%</button>
-                <button class="uk-button uk-button-small">-10%</button>
-                <button class="uk-button uk-button-small">0%</button>
+                <button class="uk-button uk-button-small" onclick="return triggerReset();">reset</button>
+                <button class="uk-button uk-button-small" onclick="return triggerCalc(8);">+8%</button>
+                <button class="uk-button uk-button-small" onclick="return triggerCalc(-8);">-8%</button>
+                <button class="uk-button uk-button-small" onclick="return triggerCalc(5);">+5%</button>
+                <button class="uk-button uk-button-small" onclick="return triggerCalc(-5);">-5%</button>
+                <button class="uk-button uk-button-small" onclick="return triggerCalc(10);">+10%</button>
+                <button class="uk-button uk-button-small" onclick="return triggerCalc(-10);">-10%</button>
             </div>
             <select class="uk-form-select" name="outcomeCategory.categoryId" required="required">
                 <option value="">カテゴリ</option>
@@ -107,6 +108,47 @@
                         }
                     });
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var event = new Event('updateAmount');
+            var amount = document.querySelector("[name='amount']");
+
+            window.CalcState = function (val) {
+                this.amount = val;
+                this.updated = val;
+                this.freezed = true;
+            };
+            var calcState = new CalcState(0);
+
+            window.setCalcState = function (input) {
+                console.log('set');
+                calcState = new CalcState(Number(input.value));
+                calcState.freezed = false;
+            };
+
+            window.triggerCalc = function (percent) {
+                if (!calcState.freezed) {
+                    console.log('update ', percent);
+                    calcState.updated = Math.floor((percent + 100) * Number(calcState.updated) / 100);
+                    amount.dispatchEvent(event);
+                }
+                return false;
+            };
+
+            window.triggerReset = function () {
+                if (!calcState.freezed) {
+                    console.log('reset');
+                    calcState.updated = calcState.amount;
+                    amount.dispatchEvent(event);
+                }
+                return false;
+            };
+
+            amount.addEventListener('updateAmount', function () {
+                amount.value = calcState.updated;
+            });
+
+        }, false);
 
 
     </script>
