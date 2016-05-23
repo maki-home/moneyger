@@ -22,6 +22,8 @@
             <input class="uk-form" name="outcomeName" type="text" placeholder="支出名" required="required"
                    onblur="predict(this)"/>
             <input class="uk-form" name="amount" type="number" placeholder="単価" min="0" required="required"/>
+            <input class="uk-form" name="quantity" type="number" placeholder="数量" min="0" value="1"
+                   required="required"/>
             <div class="uk-button-group">
                 <button class="uk-button uk-button-small">+8%</button>
                 <button class="uk-button uk-button-small">-8%</button>
@@ -32,13 +34,12 @@
                 <button class="uk-button uk-button-small">0%</button>
             </div>
             <select class="uk-form-select" name="outcomeCategory.categoryId" required="required">
-                <option value="">--</option>
-                <optgroup th:each="categoryGroup : ${categories}"
-                          th:label="${categoryGroup.key}">
-                    <option th:each="value : ${categoryGroup.value}"
-                            th:label="${value.value}"
-                            th:value="${value.key}"></option>
-                </optgroup>
+                <option value="">カテゴリ</option>
+                <!--/*/ <th:block th:each="categoryGroup : ${categories}" th:label="${categoryGroup.key}"> /*/-->
+                <option th:each="value : ${categoryGroup.value}"
+                        th:label="${categoryGroup.key + '('+ value.value + ')'}"
+                        th:value="${value.key}"></option>
+                <!--/*/ </th:block> /*/-->
             </select>
             <button class="uk-button uk-button-primary">登録</button>
         </form>

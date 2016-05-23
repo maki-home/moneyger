@@ -12,6 +12,7 @@ import java.util.Map;
 public class Outcome implements Serializable {
     private String outcomeName;
     private Integer amount;
+    private Integer quantity;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate outcomeDate;
     private String outcomeBy;
