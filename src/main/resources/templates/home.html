@@ -19,8 +19,9 @@
               class="uk-panel uk-panel-box uk-form">
             <input class="uk-form" name="outcomeDate" type="date" placeholder="支出日" required="required"
                    th:value="${outcomeDate}"/>
-            <input class="uk-form" name="outcomeName" type="text" placeholder="支出名" required="required"/>
-            <input class="uk-form" name="amount" type="number" placeholder="金額" min="0" required="required"/>
+            <input class="uk-form" name="outcomeName" type="text" placeholder="支出名" required="required"
+                   onblur="predict(this)"/>
+            <input class="uk-form" name="amount" type="number" placeholder="単価" min="0" required="required"/>
             <div class="uk-button-group">
                 <button class="uk-button uk-button-small">+8%</button>
                 <button class="uk-button uk-button-small">-8%</button>
@@ -50,6 +51,7 @@
                                               th:text="${outcomeDate.plusDays(1)}">...</a></li>
         </ul>
         <table class="uk-table uk-table-striped">
+            <thead>
             <tr>
                 <th>支出日</th>
                 <th>カテゴリ</th>
@@ -57,6 +59,8 @@
                 <th>金額</th>
                 <th>支出者</th>
             </tr>
+            </thead>
+            <tbody>
             <tr th:each="outcome : ${outcomes}">
                 <td><a th:href="@{'/outcomes/' + ${outcome.outcomeDate}}" th:text="${outcome.outcomeDate}"></a></td>
                 <td><span th:text="${outcome.parentCategoryName}"></span>(<span
@@ -66,6 +70,8 @@
                 <td><span th:text="${outcome.amount}"></span></td>
                 <td><a th:href="@{'/members/' + ${outcome.outcomeBy}}" th:text="${outcome.memberName}"></a></td>
             </tr>
+            </tbody>
+            <tfoot>
             <tr>
                 <td>&nbsp;</td>
                 <td>&nbsp;</td>
@@ -73,9 +79,33 @@
                 <td><span th:text="${total}"></span>円</td>
                 <td>&nbsp;</td>
             </tr>
+            </tfoot>
         </table>
     </div>
     <div class="uk-width-1-5"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.0/lodash.min.js"></script>
+    <script>
+        var request = window.superagent;
+        function predict(input) {
+            request.post('https://predict.cfapps.pez.pivotal.io/api/predict')
+                    .type('form')
+                    .send({outcomeName: input.value})
+                    .end(function (err, res) {
+                        var predicted = _(res.body).sortBy(function (x) {
+                            return -x.probability;
+                        }).head();
+                        var categoryId = document.querySelector("[name='outcomeCategory.categoryId']");
+                        if (predicted) {
+                            categoryId.value = predicted.categoryId;
+                        } else {
+                            categoryId.value = '';
+                        }
+                    });
+        }
+
+
+    </script>
 </div>
 </body>
 </html>
