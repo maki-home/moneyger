@@ -18,9 +18,14 @@
         <h2>支出一覧</h2>
         <ul class="uk-pagination">
             <li class="uk-pagination-previous"><a th:href="@{'/monthly/' + ${outcomeDate.minusMonths(1)}}"
-                                                  th:text="${outcomeDate.minusMonths(1)}">...</a></li>
+                                                  th:text="${outcomeDate.minusMonths(1).year + '-' + outcomeDate.minusMonths(1).monthValue}">...</a>
+            </li>
+            <li>
+                <a th:text="${outcomeDate.year + '-' + outcomeDate.monthValue}"></a>
+            </li>
             <li class="uk-pagination-next"><a th:href="@{'/monthly/' + ${outcomeDate.plusMonths(1)}}"
-                                              th:text="${outcomeDate.plusMonths(1)}">...</a></li>
+                                              th:text="${outcomeDate.plusMonths(1).year + '-' + outcomeDate.plusMonths(1).monthValue}">...</a>
+            </li>
         </ul>
         <table class="uk-table uk-table-striped">
             <tr>

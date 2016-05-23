@@ -48,6 +48,9 @@
         <ul class="uk-pagination">
             <li class="uk-pagination-previous"><a th:href="@{'/outcomes/' + ${outcomeDate.minusDays(1)}}"
                                                   th:text="${outcomeDate.minusDays(1)}">...</a></li>
+            <li>
+                <a th:href="@{'/monthly/' + ${outcomeDate.with(T(java.time.temporal.TemporalAdjusters).firstDayOfMonth())}}"
+                   th:text="${outcomeDate.year + '-' + outcomeDate.monthValue}">...</a></li>
             <li class="uk-pagination-next"><a th:href="@{'/outcomes/' + ${outcomeDate.plusDays(1)}}"
                                               th:text="${outcomeDate.plusDays(1)}">...</a></li>
         </ul>
