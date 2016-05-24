@@ -10,6 +10,7 @@ import java.util.Map;
 
 @Data
 public class Outcome implements Serializable {
+    private Integer outcomeId;
     private String outcomeName;
     private Integer amount;
     private Integer quantity;

@@ -31,9 +31,9 @@ public class MoneygrController {
     OAuth2RestTemplate restTemplate;
     @Autowired
     MoneygrUser user;
-    @Value("${inout.uri:http://localhost:7777/api}")
+    @Value("${inout.uri}")
     URI inoutUri;
-    @Value("${member.uri:http://localhost:9999/uaa/api}")
+    @Value("${member.uri}")
     URI memberUri;
 
     @RequestMapping("/")

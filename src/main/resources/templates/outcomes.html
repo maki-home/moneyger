@@ -62,7 +62,8 @@
         <form method="get" class=" uk-form" th:if="${outcomeDate == null}">
             <input name="fromDate" type="date" th:value="${fromDate}"/> ~
             <input name="toDate" type="date" th:value="${toDate}"/>
-            <input name="parentCategoryId" type="hidden" th:if="${param.parentCategoryId != null}" th:value="${param.parentCategoryId[0]}"/>
+            <input name="parentCategoryId" type="hidden" th:if="${param.parentCategoryId != null}"
+                   th:value="${param.parentCategoryId[0]}"/>
             <button class="uk-button">Go</button>
         </form>
         <ul class="uk-pagination" th:if="${outcomeDate != null}">
@@ -83,11 +84,13 @@
                 <th>金額</th>
                 <th><i class="uk-icon-credit-card"></i></th>
                 <th>支出者</th>
+                <th>操作</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="outcome : ${outcomes}">
-                <td><a th:href="@{'/outcomes'(fromDate=${fromDate},toDate=${toDate})}" th:text="${outcome.outcomeDate}"></a></td>
+                <td><a th:href="@{'/outcomes'(fromDate=${fromDate},toDate=${toDate})}"
+                       th:text="${outcome.outcomeDate}"></a></td>
                 <td>
                     <a th:href="@{'/outcomes'(fromDate=${fromDate},toDate=${toDate},parentCategoryId=${outcome.parentCategoryId})}"
                        th:text="${outcome.parentCategoryName}"></a> (<span
@@ -97,6 +100,14 @@
                 <td><span th:text="${outcome.amount}"></span>円</td>
                 <td><i class="uk-icon-check-square" th:if="${outcome.creditCard}"></i></td>
                 <td><span th:text="${outcome.memberName}"></span></td>
+                <td>
+                    <div class="uk-button-group">
+                        <button class="uk-button uk-button-small"><i class="uk-icon-edit"></i></button>
+                        <button class="uk-button uk-button-small uk-button-danger"
+                                th:attr="data-id=${outcome.outcomeId}" onclick="return deleteOutcome(this);"><i
+                                class="uk-icon-trash"></i></button>
+                    </div>
+                </td>
             </tr>
             </tbody>
             <tfoot>
@@ -105,6 +116,7 @@
                 <td>&nbsp;</td>
                 <th>計</th>
                 <td><span th:text="${total}"></span>円</td>
+                <td>&nbsp;</td>
                 <td>&nbsp;</td>
                 <td>&nbsp;</td>
             </tr>
@@ -117,8 +129,9 @@
     <script>
         var request = window.superagent;
         function predict(input) {
-            request.post('https://predict.cfapps.pez.pivotal.io/api/predict')
+            request.post('/api/predict')
                     .type('form')
+                    .set('X-CSRF-TOKEN', document.forms[0]._csrf.value)
                     .send({outcomeName: input.value})
                     .end(function (err, res) {
                         var predicted = _(res.body).sortBy(function (x) {
@@ -131,6 +144,19 @@
                             categoryId.value = '';
                         }
                     });
+        }
+
+        function deleteOutcome(button) {
+            if (confirm("本当に削除しますか?")) {
+                request.del('/api/outcomes/' + button.dataset.id)
+                        .set('X-CSRF-TOKEN', document.forms[0]._csrf.value)
+                        .end(function (err, res) {
+                            if (res.status == 204) {
+                                location.reload();
+                            }
+                        });
+            }
+            return false;
         }
 
         document.addEventListener('DOMContentLoaded', function () {

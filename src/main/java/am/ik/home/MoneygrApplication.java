@@ -6,6 +6,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.oauth2.client.EnableOAuth2Sso;
+import org.springframework.cloud.netflix.zuul.EnableZuulProxy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.hateoas.hal.Jackson2HalModule;
@@ -17,6 +18,7 @@ import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 
 @SpringBootApplication
 @EnableOAuth2Sso
+@EnableZuulProxy
 public class MoneygrApplication extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(HttpSecurity http) throws Exception {
