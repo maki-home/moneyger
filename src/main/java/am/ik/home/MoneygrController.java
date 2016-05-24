@@ -14,6 +14,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
@@ -73,36 +75,8 @@ public class MoneygrController {
     }
 
 
-    @RequestMapping("/monthly/{outcomeDate}")
-    String monthly(Model model, @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @PathVariable LocalDate outcomeDate) {
-        List<Outcome.SummaryByDate> summaryByDate = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
-                        .pathSegment("outcomes", "reportByDate")
-                        .queryParam("fromDate", outcomeDate.with(TemporalAdjusters.firstDayOfMonth()))
-                        .queryParam("toDate", outcomeDate.with(TemporalAdjusters.lastDayOfMonth()))
-                        .build().toUri()).build(), new ParameterizedTypeReference<List<Outcome.SummaryByDate>>() {
-                }
-        ).getBody();
-        List<Outcome.SummaryByParentCategory> summaryByParentCategory = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
-                        .pathSegment("outcomes", "reportByParentCategory")
-                        .queryParam("fromDate", outcomeDate.with(TemporalAdjusters.firstDayOfMonth()))
-                        .queryParam("toDate", outcomeDate.with(TemporalAdjusters.lastDayOfMonth()))
-                        .build().toUri()).build(),
-                new ParameterizedTypeReference<List<Outcome.SummaryByParentCategory>>() {
-                }
-        ).getBody();
-
-        model.addAttribute("summaryByDate", summaryByDate);
-        model.addAttribute("summaryByParentCategory", summaryByParentCategory);
-        model.addAttribute("total", summaryByDate.stream().mapToLong(Outcome.SummaryByDate::getSubTotal).sum());
-        model.addAttribute("user", user);
-        return "monthly";
-    }
-
-
-    @RequestMapping("/home")
-    String home(Model model) {
+    @RequestMapping(path = "outcomes")
+    String showOutcomes(Model model) {
         LocalDate now = LocalDate.now();
         model.addAttribute("outcomeDate", now);
         return showOutcomes(model, now);
@@ -110,29 +84,117 @@ public class MoneygrController {
 
     @RequestMapping(path = "outcomes/{outcomeDate}")
     String showOutcomes(Model model, @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @PathVariable LocalDate outcomeDate) {
+        return showOutcomes(model, outcomeDate, Optional.of(outcomeDate));
+    }
+
+    @RequestMapping(path = "outcomes", params = "fromDate")
+    String showOutcomes(Model model, @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam LocalDate fromDate,
+                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
+        LocalDate to = toDate.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
+
         Resources<Outcome> outcomes = restTemplate.exchange(
                 RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
                         .pathSegment("outcomes", "search", "findByOutcomeDate")
-                        .queryParam("outcomeDate", outcomeDate)
+                        .queryParam("fromDate", fromDate)
+                        .queryParam("toDate", to)
                         .build().toUri()).build(),
                 new ParameterizedTypeReference<Resources<Outcome>>() {
                 }
         ).getBody();
         Map<String, String> memberMap = memberMap(outcomes.getContent().stream().map(Outcome::getOutcomeBy));
         outcomes.forEach(o -> o.setMemberMap(memberMap));
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", to);
         model.addAttribute("outcomes", outcomes);
         model.addAttribute("total", outcomes.getContent().stream().mapToInt(Outcome::getAmount).sum());
         model.addAttribute("user", user);
         model.addAttribute("categories", categories());
-        return "home";
+        return "outcomes";
+    }
+
+    @RequestMapping(path = "outcomes", params = {"parentCategoryId", "fromDate"})
+    String showOutcomesByParentCategoryId(Model model,
+                                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam LocalDate fromDate,
+                                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate,
+                                          @RequestParam Integer parentCategoryId) {
+        LocalDate to = toDate.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
+
+        Resources<Outcome> outcomes = restTemplate.exchange(
+                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
+                        .pathSegment("outcomes", "search", "findByParentCategoryId")
+                        .queryParam("parentCategoryId", parentCategoryId)
+                        .queryParam("fromDate", fromDate)
+                        .queryParam("toDate", to)
+                        .build().toUri()).build(), new ParameterizedTypeReference<Resources<Outcome>>() {
+                }
+        ).getBody();
+
+        Map<String, String> memberMap = memberMap(outcomes.getContent().stream().map(Outcome::getOutcomeBy));
+        outcomes.forEach(o -> o.setMemberMap(memberMap));
+
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", to);
+        model.addAttribute("outcomes", outcomes);
+        model.addAttribute("total", outcomes.getContent().stream().mapToInt(Outcome::getAmount).sum());
+        model.addAttribute("user", user);
+        Map<String, Map<Integer, String>> categories = categories();
+        model.addAttribute("categories", categories);
+        model.addAttribute("parentCategory", categories.entrySet().stream().map(Map.Entry::getKey).toArray()[parentCategoryId - 1]);
+        return "outcomes";
     }
 
     @RequestMapping(path = "outcomes", method = RequestMethod.POST)
-    String registerOutcome(@ModelAttribute Outcome outcome) {
+    String registerOutcome(@ModelAttribute Outcome outcome, HttpServletResponse response) {
         restTemplate.exchange(RequestEntity.post(UriComponentsBuilder.fromUri(inoutUri).pathSegment("outcomes").build().toUri())
                         .body(outcome),
                 new ParameterizedTypeReference<Resource<Outcome>>() {
                 });
+        Cookie cookie = new Cookie("creditCard", String.valueOf(outcome.isCreditCard()));
+        response.addCookie(cookie);
         return "redirect:/outcomes/" + outcome.getOutcomeDate();
+    }
+
+    @RequestMapping(path = "/report")
+    String report(Model model) {
+        return report(model, LocalDate.now(), Optional.empty());
+    }
+
+    @RequestMapping(path = "/report", params = "fromDate")
+    String report(Model model,
+                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam LocalDate fromDate,
+                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
+        LocalDate to = toDate.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
+        List<Outcome.SummaryByDate> summaryByDate = restTemplate.exchange(
+                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
+                        .pathSegment("outcomes", "reportByDate")
+                        .queryParam("fromDate", fromDate)
+                        .queryParam("toDate", to)
+                        .build().toUri()).build(), new ParameterizedTypeReference<List<Outcome.SummaryByDate>>() {
+                }
+        ).getBody();
+        List<Outcome.SummaryByParentCategory> summaryByParentCategory = restTemplate.exchange(
+                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
+                        .pathSegment("outcomes", "reportByParentCategory")
+                        .queryParam("fromDate", fromDate)
+                        .queryParam("toDate", to)
+                        .build().toUri()).build(),
+                new ParameterizedTypeReference<List<Outcome.SummaryByParentCategory>>() {
+                }
+        ).getBody();
+
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", to);
+        model.addAttribute("summaryByDate", summaryByDate);
+        model.addAttribute("summaryByParentCategory", summaryByParentCategory);
+        model.addAttribute("total", summaryByDate.stream().mapToLong(Outcome.SummaryByDate::getSubTotal).sum());
+        model.addAttribute("user", user);
+        return "report";
+    }
+
+
+    @ModelAttribute("creditCard")
+    boolean isCreditCard(@CookieValue(name = "creditCard", defaultValue = "false") boolean isCreditCard) {
+        System.out.println("isCreditCard = " + isCreditCard);
+        return isCreditCard;
     }
 }

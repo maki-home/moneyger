@@ -7,14 +7,25 @@
 </head>
 <body>
 <div class="uk-grid">
-    <div class="uk-width-1-5"></div>
-    <div class="uk-width-3-5">
-        <h1><a th:href="@{/home}">Moneyger</a></h1>
-        <p>Hello <span th:text="${user.displayName}"></span></p>
-        <form th:action="@{/logout}" method="post">
-            <button class="uk-button">Logout</button>
-        </form>
-        <br/>
+    <div class="uk-width-1-10"></div>
+    <div class="uk-width-8-10">
+        <nav class="uk-navbar">
+            <a th:href="@{/outcomes}" class="uk-navbar-brand">家計簿</a>
+            <div class="uk-navbar-flip">
+                <ul class="uk-navbar-nav">
+                    <li><a th:href="@{/outcomes}">支出</a></li>
+                    <li><a href="#" onclick="alert('準備中')">収入</a></li>
+                    <li><a th:href="@{/report}">今月のレポート</a></li>
+                    <li><a th:href="@{${@environment.getProperty('auth-server', 'http://localhost:9999/uaa')}}"><i
+                            class="uk-icon-user"></i> <span th:text="${user.displayName}"></span></a></li>
+                </ul>
+                <form th:action="@{/logout}" method="post" class="uk-form uk-margin-remove uk-display-inline-block">
+                    <button class="uk-button">Logout</button>
+                </form>
+            </div>
+        </nav>
+        <h2>支出</h2>
+        <h3>支出登録</h3>
         <form th:action="@{/outcomes}" method="post" th:object="${outcome}"
               class="uk-panel uk-panel-box uk-form">
             <input class="uk-form" name="outcomeDate" type="date" placeholder="支出日" required="required"
@@ -42,15 +53,23 @@
                         th:value="${value.key}"></option>
                 <!--/*/ </th:block> /*/-->
             </select>
+            <label><input name="creditCard" class="uk-form" type="checkbox" th:checked="${creditCard}"/> <i
+                    class="uk-icon-credit-card uk-icon-medium"></i></label>
             <button class="uk-button uk-button-primary">登録</button>
         </form>
 
-        <h2>支出一覧</h2>
-        <ul class="uk-pagination">
+        <h3>支出一覧 <span th:if="${parentCategory != null}" th:text="${'('+ parentCategory + ')'}"></span></h3>
+        <form method="get" class=" uk-form" th:if="${outcomeDate == null}">
+            <input name="fromDate" type="date" th:value="${fromDate}"/> ~
+            <input name="toDate" type="date" th:value="${toDate}"/>
+            <input name="parentCategoryId" type="hidden" th:if="${param.parentCategoryId != null}" th:value="${param.parentCategoryId[0]}"/>
+            <button class="uk-button">Go</button>
+        </form>
+        <ul class="uk-pagination" th:if="${outcomeDate != null}">
             <li class="uk-pagination-previous"><a th:href="@{'/outcomes/' + ${outcomeDate.minusDays(1)}}"
                                                   th:text="${outcomeDate.minusDays(1)}">...</a></li>
             <li>
-                <a th:href="@{'/monthly/' + ${outcomeDate.with(T(java.time.temporal.TemporalAdjusters).firstDayOfMonth())}}"
+                <a th:href="@{'/report'(fromDate=${outcomeDate.with(T(java.time.temporal.TemporalAdjusters).firstDayOfMonth())})}"
                    th:text="${outcomeDate.year + '-' + outcomeDate.monthValue}">...</a></li>
             <li class="uk-pagination-next"><a th:href="@{'/outcomes/' + ${outcomeDate.plusDays(1)}}"
                                               th:text="${outcomeDate.plusDays(1)}">...</a></li>
@@ -62,18 +81,22 @@
                 <th>カテゴリ</th>
                 <th>支出名</th>
                 <th>金額</th>
+                <th><i class="uk-icon-credit-card"></i></th>
                 <th>支出者</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="outcome : ${outcomes}">
-                <td><a th:href="@{'/outcomes/' + ${outcome.outcomeDate}}" th:text="${outcome.outcomeDate}"></a></td>
-                <td><span th:text="${outcome.parentCategoryName}"></span>(<span
+                <td><a th:href="@{'/outcomes'(fromDate=${fromDate},toDate=${toDate})}" th:text="${outcome.outcomeDate}"></a></td>
+                <td>
+                    <a th:href="@{'/outcomes'(fromDate=${fromDate},toDate=${toDate},parentCategoryId=${outcome.parentCategoryId})}"
+                       th:text="${outcome.parentCategoryName}"></a> (<span
                         th:text="${outcome.categoryName}"></span>)
                 </td>
                 <td><span th:text="${outcome.outcomeName}"></span></td>
-                <td><span th:text="${outcome.amount}"></span></td>
-                <td><a th:href="@{'/members/' + ${outcome.outcomeBy}}" th:text="${outcome.memberName}"></a></td>
+                <td><span th:text="${outcome.amount}"></span>円</td>
+                <td><i class="uk-icon-check-square" th:if="${outcome.creditCard}"></i></td>
+                <td><span th:text="${outcome.memberName}"></span></td>
             </tr>
             </tbody>
             <tfoot>
@@ -83,11 +106,12 @@
                 <th>計</th>
                 <td><span th:text="${total}"></span>円</td>
                 <td>&nbsp;</td>
+                <td>&nbsp;</td>
             </tr>
             </tfoot>
         </table>
     </div>
-    <div class="uk-width-1-5"></div>
+    <div class="uk-width-1-10"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.0/lodash.min.js"></script>
     <script>
@@ -121,14 +145,12 @@
             var calcState = new CalcState(0);
 
             window.setCalcState = function (input) {
-                console.log('set');
                 calcState = new CalcState(Number(input.value));
                 calcState.freezed = false;
             };
 
             window.triggerCalc = function (percent) {
                 if (!calcState.freezed) {
-                    console.log('update ', percent);
                     calcState.updated = Math.floor((percent + 100) * Number(calcState.updated) / 100);
                     amount.dispatchEvent(event);
                 }
@@ -137,7 +159,6 @@
 
             window.triggerReset = function () {
                 if (!calcState.freezed) {
-                    console.log('reset');
                     calcState.updated = calcState.amount;
                     amount.dispatchEvent(event);
                 }

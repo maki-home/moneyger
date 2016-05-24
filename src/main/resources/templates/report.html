@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Moneygr</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/2.26.3/css/uikit.gradient.min.css"/>
+</head>
+<body>
+<div class="uk-grid">
+    <div class="uk-width-1-10"></div>
+    <div class="uk-width-8-10">
+        <nav class="uk-navbar">
+            <a th:href="@{/outcomes}" class="uk-navbar-brand">家計簿</a>
+            <div class="uk-navbar-flip">
+                <ul class="uk-navbar-nav">
+                    <li><a th:href="@{/outcomes}">支出</a></li>
+                    <li><a href="#" onclick="alert('準備中')">収入</a></li>
+                    <li><a th:href="@{/report}">今月のレポート</a></li>
+                    <li><a th:href="@{${@environment.getProperty('auth-server', 'http://localhost:9999/uaa')}}"><i
+                            class="uk-icon-user"></i> <span th:text="${user.displayName}"></span></a></li>
+                </ul>
+                <form th:action="@{/logout}" method="post" class="uk-form uk-margin-remove uk-display-inline-block">
+                    <button class="uk-button">Logout</button>
+                </form>
+            </div>
+        </nav>
+        <h2><span th:text="${fromDate.toString() + ' ~ ' + toDate.toString()}"></span>のレポート</h2>
+        <ul class="uk-pagination">
+            <li class="uk-pagination-previous"><a th:href="@{'/report'(fromDate=${fromDate.minusMonths(1).with(T(java.time.temporal.TemporalAdjusters).firstDayOfMonth())})}"
+                                                  th:text="${fromDate.minusMonths(1).year + '-' + fromDate.minusMonths(1).monthValue}">...</a>
+            </li>
+            <li class="uk-pagination-next"><a th:href="@{'/report'(fromDate=${fromDate.plusMonths(1).with(T(java.time.temporal.TemporalAdjusters).firstDayOfMonth())})}"
+                                              th:text="${fromDate.plusMonths(1).year + '-' + fromDate.plusMonths(1).monthValue}">...</a>
+            </li>
+        </ul>
+        <form method="get" class=" uk-form">
+            <input name="fromDate" type="date" th:value="${fromDate}"/> ~
+            <input name="toDate" type="date" th:value="${toDate}"/>
+            <button class="uk-button">Go</button>
+        </form>
+        <h3>支出一覧</h3>
+
+        <table class="uk-table uk-table-striped">
+            <thead>
+            <tr>
+                <th>支出日</th>
+                <th>金額</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="outcome : ${summaryByDate}">
+                <td><a th:href="@{'/outcomes/' + ${outcome.outcomeDate}}" th:text="${outcome.outcomeDate}"></a></td>
+                <td><span th:text="${outcome.subTotal}"></span>円</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>計</th>
+                <td><span th:text="${total}"></span>円</td>
+            </tr>
+            </tfoot>
+        </table>
+        <table class="uk-table uk-table-striped">
+            <thead>
+            <tr>
+                <th>カテゴリ</th>
+                <th>金額</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="outcome : ${summaryByParentCategory}">
+                <td>
+                    <a th:href="@{'/outcomes'(fromDate=${fromDate},toDate=${toDate},parentCategoryId=${outcome.parentCategoryId})}"
+                       th:text="${outcome.parentCategoryName}"></a></td>
+                <td><span th:text="${outcome.subTotal}"></span>円</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>計</th>
+                <td><span th:text="${total}"></span>円</td>
+            </tr>
+            </tfoot>
+        </table>
+        <h3>収入</h3>
+    </div>
+    <div class="uk-width-1-10"></div>
+</div>
+</body>
+</html>

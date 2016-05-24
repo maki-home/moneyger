@@ -17,6 +17,7 @@ public class Outcome implements Serializable {
     private LocalDate outcomeDate;
     private String outcomeBy;
     private OutcomeCategory outcomeCategory;
+    private boolean isCreditCard;
 
     @Setter
     private Map<String, String> memberMap;
