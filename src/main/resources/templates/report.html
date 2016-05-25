@@ -2,13 +2,14 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Moneygr</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/2.26.3/css/uikit.gradient.min.css"/>
 </head>
 <body>
 <div class="uk-grid">
-    <div class="uk-width-1-10"></div>
-    <div class="uk-width-8-10">
+    <div class="uk-width-10-10">
         <nav class="uk-navbar">
             <a th:href="@{/outcomes}" class="uk-navbar-brand">家計簿</a>
             <div class="uk-navbar-flip">
@@ -84,7 +85,6 @@
         </table>
         <h3>収入</h3>
     </div>
-    <div class="uk-width-1-10"></div>
 </div>
 </body>
 </html>

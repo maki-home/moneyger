@@ -1,0 +1,10 @@
+---
+applications:
+  - name: moneygr
+    memory: 1g
+    instances: 1
+    path: target/moneygr-0.0.1-SNAPSHOT.jar
+    buildpack: java_buildpack_offline
+    env:
+      auth-server: http://home-uaa.cfapps.pez.pivotal.io/uaa
+      inout.uri: http://income-outcome.cfapps.pez.pivotal.io/api

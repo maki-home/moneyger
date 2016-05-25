@@ -2,13 +2,14 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>Moneygr</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/2.26.3/css/uikit.gradient.min.css"/>
 </head>
 <body>
 <div class="uk-grid">
-    <div class="uk-width-1-10"></div>
-    <div class="uk-width-8-10">
+    <div class="uk-width-10-10">
         <nav class="uk-navbar">
             <a th:href="@{/outcomes}" class="uk-navbar-brand">家計簿</a>
             <div class="uk-navbar-flip">
@@ -32,9 +33,9 @@
                    th:value="${outcomeDate}"/>
             <input class="uk-form" name="outcomeName" type="text" placeholder="支出名" required="required"
                    onblur="predict(this)"/>
-            <input class="uk-form" name="amount" type="number" placeholder="単価" min="0" required="required"
+            <input class="uk-form" name="amount" type="number" pattern="\d*" placeholder="単価" min="0" required="required"
                    onblur="setCalcState(this)"/>
-            <input class="uk-form" name="quantity" type="number" placeholder="数量" min="0" value="1"
+            <input class="uk-form" name="quantity" type="number" pattern="\d*" placeholder="数量" min="0" value="1"
                    required="required"/>
             <div class="uk-button-group">
                 <button class="uk-button uk-button-small" onclick="return triggerReset();">reset</button>
@@ -125,7 +126,6 @@
             </tfoot>
         </table>
     </div>
-    <div class="uk-width-1-10"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.0/lodash.min.js"></script>
     <script>
