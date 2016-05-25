@@ -144,11 +144,13 @@ public class MoneygrController {
     }
 
     @RequestMapping(path = "outcomes", method = RequestMethod.POST)
-    String registerOutcome(@ModelAttribute Outcome outcome, HttpServletResponse response) {
-        restTemplate.exchange(RequestEntity.post(UriComponentsBuilder.fromUri(inoutUri).pathSegment("outcomes").build().toUri())
-                        .body(outcome),
-                new ParameterizedTypeReference<Resource<Outcome>>() {
-                });
+    String registerOutcome(Outcome outcome, HttpServletResponse response) {
+        System.out.println(outcome);
+        RequestEntity<Outcome> req = RequestEntity.post(UriComponentsBuilder.fromUri(inoutUri)
+                .pathSegment("outcomes")
+                .build().toUri()).body(outcome);
+        restTemplate.exchange(req, new ParameterizedTypeReference<Resource<Outcome>>() {
+        });
         Cookie cookie = new Cookie("creditCard", String.valueOf(outcome.isCreditCard()));
         response.addCookie(cookie);
         return "redirect:/outcomes/" + outcome.getOutcomeDate();
@@ -191,9 +193,10 @@ public class MoneygrController {
         return "report";
     }
 
-
-    @ModelAttribute("creditCard")
-    boolean isCreditCard(@CookieValue(name = "creditCard", defaultValue = "false") boolean isCreditCard) {
-        return isCreditCard;
+    @ModelAttribute
+    Outcome outcome(@CookieValue(name = "creditCard", defaultValue = "false") boolean isCreditCard) {
+        Outcome outcome = new Outcome();
+        outcome.setCreditCard(isCreditCard);
+        return outcome;
     }
 }

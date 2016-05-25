@@ -53,9 +53,9 @@
                         th:value="${value.key}"></option>
                 <!--/*/ </th:block> /*/-->
             </select>
-            <label><input name="creditCard" class="uk-form" type="checkbox" th:checked="${creditCard}"/> <i
+            <label><input th:field="*{creditCard}" class="uk-form" type="checkbox"/> <i
                     class="uk-icon-credit-card uk-icon-medium"></i></label>
-            <input type="hidden" name="outcomeId" />
+            <input type="hidden" name="outcomeId"/>
             <button class="uk-button uk-button-primary">登録</button>
         </form>
 
@@ -174,7 +174,11 @@
                                     });
                             for (var k in outcome) {
                                 if (f[k]) {
-                                    f[k].value = outcome[k];
+                                    if (k != 'creditCard') {
+                                        f[k].value = outcome[k];
+                                    } else {
+                                        f._creditCard = outcome.creditCard ? 'on' : 'off';
+                                    }
                                 }
                             }
                             var b = _.last(f.querySelectorAll('button'));
