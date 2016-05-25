@@ -89,7 +89,7 @@
             </thead>
             <tbody>
             <tr th:each="outcome : ${outcomes}">
-                <td><a th:href="@{'/outcomes'(fromDate=${fromDate},toDate=${toDate})}"
+                <td><a th:href="@{'/outcomes'(fromDate=${outcome.outcomeDate},toDate=${outcome.outcomeDate})}"
                        th:text="${outcome.outcomeDate}"></a></td>
                 <td>
                     <a th:href="@{'/outcomes'(fromDate=${fromDate},toDate=${toDate},parentCategoryId=${outcome.parentCategoryId})}"
