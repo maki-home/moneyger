@@ -26,7 +26,7 @@
         </nav>
         <h2>支出</h2>
         <h3>支出登録</h3>
-        <form th:action="@{/outcomes}" method="post" th:object="${outcome}"
+        <form id="outcomeForm" th:action="@{/outcomes}" method="post" th:object="${outcome}"
               class="uk-panel uk-panel-box uk-form">
             <input class="uk-form" name="outcomeDate" type="date" placeholder="支出日" required="required"
                    th:value="${outcomeDate}"/>
@@ -55,6 +55,7 @@
             </select>
             <label><input name="creditCard" class="uk-form" type="checkbox" th:checked="${creditCard}"/> <i
                     class="uk-icon-credit-card uk-icon-medium"></i></label>
+            <input type="hidden" name="outcomeId" />
             <button class="uk-button uk-button-primary">登録</button>
         </form>
 
@@ -97,15 +98,16 @@
                         th:text="${outcome.categoryName}"></span>)
                 </td>
                 <td><span th:text="${outcome.outcomeName}"></span></td>
-                <td><span th:text="${outcome.amount}"></span>円</td>
+                <td><span th:text="${outcome.amount}"></span>円 x <span th:text="${outcome.quantity}"></span></td>
                 <td><i class="uk-icon-check-square" th:if="${outcome.creditCard}"></i></td>
                 <td><span th:text="${outcome.memberName}"></span></td>
                 <td>
-                    <div class="uk-button-group">
-                        <button class="uk-button uk-button-small"><i class="uk-icon-edit"></i></button>
+                    <div class="uk-button-group"
+                         th:attr="data-id=${outcome.outcomeId}">
+                        <button class="uk-button uk-button-small" onclick="loadFromServer(this)"><i
+                                class="uk-icon-edit"></i></button>
                         <button class="uk-button uk-button-small uk-button-danger"
-                                th:attr="data-id=${outcome.outcomeId}" onclick="return deleteOutcome(this);"><i
-                                class="uk-icon-trash"></i></button>
+                                onclick="return deleteOutcome(this);"><i class="uk-icon-trash"></i></button>
                     </div>
                 </td>
             </tr>
@@ -148,7 +150,7 @@
 
         function deleteOutcome(button) {
             if (confirm("本当に削除しますか?")) {
-                request.del('/api/outcomes/' + button.dataset.id)
+                request.del('/api/outcomes/' + button.parentNode.dataset.id)
                         .set('X-CSRF-TOKEN', document.forms[0]._csrf.value)
                         .end(function (err, res) {
                             if (res.status == 204) {
@@ -156,6 +158,30 @@
                             }
                         });
             }
+            return false;
+        }
+
+        function loadFromServer(button) {
+            request.get('/api/outcomes/' + button.parentNode.dataset.id)
+                    .end(function (err, res) {
+                        if (res.status == 200) {
+                            var f = document.querySelector("#outcomeForm");
+                            var outcome = JSON.parse(res.text);
+                            request.get(outcome._links.outcomeCategory.href.replace('api/outcomes/', '' /* remoce dup */))
+                                    .end(function (err, res) {
+                                        var category = JSON.parse(res.text);
+                                        f.querySelector("select").value = category.categoryId;
+                                    });
+                            for (var k in outcome) {
+                                if (f[k]) {
+                                    f[k].value = outcome[k];
+                                }
+                            }
+                            var b = _.last(f.querySelectorAll('button'));
+                            b.innerText = "更新";
+                            b.className = b.className + " uk-button-success";
+                        }
+                    });
             return false;
         }
 

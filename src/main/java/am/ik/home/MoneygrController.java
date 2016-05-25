@@ -106,7 +106,7 @@ public class MoneygrController {
         model.addAttribute("fromDate", fromDate);
         model.addAttribute("toDate", to);
         model.addAttribute("outcomes", outcomes);
-        model.addAttribute("total", outcomes.getContent().stream().mapToInt(Outcome::getAmount).sum());
+        model.addAttribute("total", outcomes.getContent().stream().mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
         model.addAttribute("user", user);
         model.addAttribute("categories", categories());
         return "outcomes";
@@ -135,7 +135,7 @@ public class MoneygrController {
         model.addAttribute("fromDate", fromDate);
         model.addAttribute("toDate", to);
         model.addAttribute("outcomes", outcomes);
-        model.addAttribute("total", outcomes.getContent().stream().mapToInt(Outcome::getAmount).sum());
+        model.addAttribute("total", outcomes.getContent().stream().mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
         model.addAttribute("user", user);
         Map<String, Map<Integer, String>> categories = categories();
         model.addAttribute("categories", categories);
@@ -194,7 +194,6 @@ public class MoneygrController {
 
     @ModelAttribute("creditCard")
     boolean isCreditCard(@CookieValue(name = "creditCard", defaultValue = "false") boolean isCreditCard) {
-        System.out.println("isCreditCard = " + isCreditCard);
         return isCreditCard;
     }
 }
