@@ -37,7 +37,7 @@
             <input class="uk-form" name="outcomeName" type="text" placeholder="支出名" onblur="predict(this)"/><br/>
             <input class="uk-form" name="amount" type="number" pattern="\d*" placeholder="単価"
                    onblur="setCalcState(this)"/><br/>
-            <input class="uk-form" name="quantity" type="number" pattern="\d*" placeholder="数量"/><br/>
+            <input class="uk-form" name="quantity" type="number" pattern="\d*" placeholder="数量" value="1"/><br/>
             <div class="uk-button-group">
                 <button class="uk-button uk-button-small" onclick="return triggerReset();">reset</button>
                 <button class="uk-button uk-button-small" onclick="return triggerCalc(8);">+8%</button>
