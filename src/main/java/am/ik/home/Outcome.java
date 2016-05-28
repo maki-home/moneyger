@@ -2,8 +2,13 @@ package am.ik.home;
 
 import lombok.Data;
 import lombok.Setter;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Map;
@@ -11,12 +16,22 @@ import java.util.Map;
 @Data
 public class Outcome implements Serializable {
     private Integer outcomeId;
+    @NotEmpty
     private String outcomeName;
+    @NotNull
+    @Min(0)
+    @Max(10000000)
     private Integer amount;
+    @NotNull
+    @Min(0)
+    @Max(999)
     private Integer quantity;
+    @NotNull
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate outcomeDate;
     private String outcomeBy;
+    @NotNull
+    @Valid
     private OutcomeCategory outcomeCategory;
     private boolean isCreditCard;
 
@@ -50,6 +65,7 @@ public class Outcome implements Serializable {
 
     @Data
     public static class OutcomeCategory implements Serializable {
+        @NotNull
         private Integer categoryId;
         private String categoryName;
         private ParentOutcomeCategory parentOutcomeCategory;

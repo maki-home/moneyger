@@ -11,6 +11,8 @@ import org.springframework.http.RequestEntity;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -144,8 +146,10 @@ public class MoneygrController {
     }
 
     @RequestMapping(path = "outcomes", method = RequestMethod.POST)
-    String registerOutcome(Outcome outcome, HttpServletResponse response) {
-        System.out.println(outcome);
+    String registerOutcome(@Validated Outcome outcome, BindingResult result, Model model, HttpServletResponse response) {
+        if (result.hasErrors()) {
+            return outcome.getOutcomeDate() == null ? showOutcomes(model) : showOutcomes(model, outcome.getOutcomeDate());
+        }
         RequestEntity<Outcome> req = RequestEntity.post(UriComponentsBuilder.fromUri(inoutUri)
                 .pathSegment("outcomes")
                 .build().toUri()).body(outcome);

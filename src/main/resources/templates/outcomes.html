@@ -21,17 +21,23 @@
                     class="uk-icon-user"></i> <span th:text="${user.displayName}"></span></a></li>
         </ul>
         <h3>支出登録</h3>
+
+        <div th:object="${outcome}">
+            <div class="uk-alert uk-alert-danger" th:if="${#fields.hasErrors()}">
+                <ul>
+                    <li th:each="error : ${#fields.detailedErrors()}">
+                        <span th:text="${error.getFieldName() + ' ' + error.getMessage()}">Error message</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
         <form id="outcomeForm" th:action="@{/outcomes}" method="post" th:object="${outcome}"
               class="uk-panel uk-panel-box uk-form">
-            <input class="uk-form" name="outcomeDate" type="date" placeholder="支出日" required="required"
-                   th:value="${outcomeDate}"/><br/>
-            <input class="uk-form" name="outcomeName" type="text" placeholder="支出名" required="required"
-                   onblur="predict(this)"/><br/>
-            <input class="uk-form" name="amount" type="number" pattern="\d*" placeholder="単価" min="0"
-                   required="required"
+            <input class="uk-form" name="outcomeDate" type="date" placeholder="支出日" th:value="${outcomeDate}"/><br/>
+            <input class="uk-form" name="outcomeName" type="text" placeholder="支出名" onblur="predict(this)"/><br/>
+            <input class="uk-form" name="amount" type="number" pattern="\d*" placeholder="単価"
                    onblur="setCalcState(this)"/><br/>
-            <input class="uk-form" name="quantity" type="number" pattern="\d*" placeholder="数量" min="0" value="1"
-                   required="required"/><br/>
+            <input class="uk-form" name="quantity" type="number" pattern="\d*" placeholder="数量"/><br/>
             <div class="uk-button-group">
                 <button class="uk-button uk-button-small" onclick="return triggerReset();">reset</button>
                 <button class="uk-button uk-button-small" onclick="return triggerCalc(8);">+8%</button>
@@ -42,7 +48,7 @@
                 <button class="uk-button uk-button-small" onclick="return triggerCalc(-10);">-10%</button>
             </div>
             <br/>
-            <select class="uk-form-select" name="outcomeCategory.categoryId" required="required">
+            <select class="uk-form-select" name="outcomeCategory.categoryId">
                 <option value="">カテゴリ</option>
                 <!--/*/ <th:block th:each="categoryGroup : ${categories}" th:label="${categoryGroup.key}"> /*/-->
                 <option th:each="value : ${categoryGroup.value}"
