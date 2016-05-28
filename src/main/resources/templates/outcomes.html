@@ -26,7 +26,7 @@
             <div class="uk-alert uk-alert-danger" th:if="${#fields.hasErrors()}">
                 <ul>
                     <li th:each="error : ${#fields.detailedErrors()}">
-                        <span th:text="${error.getFieldName() + ' ' + error.getMessage()}">Error message</span>
+                        <span th:text="${error.getMessage()}">Error message</span>
                     </li>
                 </ul>
             </div>
