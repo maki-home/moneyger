@@ -12,31 +12,26 @@
     <div class="uk-width-10-10">
         <nav class="uk-navbar">
             <a th:href="@{/outcomes}" class="uk-navbar-brand">家計簿</a>
-            <div class="uk-navbar-flip">
-                <ul class="uk-navbar-nav">
-                    <li><a th:href="@{/outcomes}">支出</a></li>
-                    <li><a href="#" onclick="alert('準備中')">収入</a></li>
-                    <li><a th:href="@{/report}">今月のレポート</a></li>
-                    <li><a th:href="@{${@environment.getProperty('auth-server', 'http://localhost:9999/uaa')}}"><i
-                            class="uk-icon-user"></i> <span th:text="${user.displayName}"></span></a></li>
-                </ul>
-                <form th:action="@{/logout}" method="post" class="uk-form uk-margin-remove uk-display-inline-block">
-                    <button class="uk-button">Logout</button>
-                </form>
-            </div>
         </nav>
-        <h2>支出</h2>
+        <ul class="uk-tab" data-uk-tab="">
+            <li><a th:href="@{/outcomes}">支出</a></li>
+            <li><a href="#" onclick="alert('準備中')">収入</a></li>
+            <li><a th:href="@{/report}">今月のレポート</a></li>
+            <li><a th:href="@{${@environment.getProperty('auth-server', 'http://localhost:9999/uaa')}}"><i
+                    class="uk-icon-user"></i> <span th:text="${user.displayName}"></span></a></li>
+        </ul>
         <h3>支出登録</h3>
         <form id="outcomeForm" th:action="@{/outcomes}" method="post" th:object="${outcome}"
               class="uk-panel uk-panel-box uk-form">
             <input class="uk-form" name="outcomeDate" type="date" placeholder="支出日" required="required"
-                   th:value="${outcomeDate}"/>
+                   th:value="${outcomeDate}"/><br/>
             <input class="uk-form" name="outcomeName" type="text" placeholder="支出名" required="required"
-                   onblur="predict(this)"/>
-            <input class="uk-form" name="amount" type="number" pattern="\d*" placeholder="単価" min="0" required="required"
-                   onblur="setCalcState(this)"/>
+                   onblur="predict(this)"/><br/>
+            <input class="uk-form" name="amount" type="number" pattern="\d*" placeholder="単価" min="0"
+                   required="required"
+                   onblur="setCalcState(this)"/><br/>
             <input class="uk-form" name="quantity" type="number" pattern="\d*" placeholder="数量" min="0" value="1"
-                   required="required"/>
+                   required="required"/><br/>
             <div class="uk-button-group">
                 <button class="uk-button uk-button-small" onclick="return triggerReset();">reset</button>
                 <button class="uk-button uk-button-small" onclick="return triggerCalc(8);">+8%</button>
@@ -46,6 +41,7 @@
                 <button class="uk-button uk-button-small" onclick="return triggerCalc(10);">+10%</button>
                 <button class="uk-button uk-button-small" onclick="return triggerCalc(-10);">-10%</button>
             </div>
+            <br/>
             <select class="uk-form-select" name="outcomeCategory.categoryId" required="required">
                 <option value="">カテゴリ</option>
                 <!--/*/ <th:block th:each="categoryGroup : ${categories}" th:label="${categoryGroup.key}"> /*/-->
@@ -53,13 +49,12 @@
                         th:label="${categoryGroup.key + '('+ value.value + ')'}"
                         th:value="${value.key}"></option>
                 <!--/*/ </th:block> /*/-->
-            </select>
+            </select><br/>
             <label><input th:field="*{creditCard}" class="uk-form" type="checkbox"/> <i
                     class="uk-icon-credit-card uk-icon-medium"></i></label>
             <input type="hidden" name="outcomeId"/>
             <button class="uk-button uk-button-primary">登録</button>
         </form>
-
         <h3>支出一覧 <span th:if="${parentCategory != null}" th:text="${'('+ parentCategory + ')'}"></span></h3>
         <form method="get" class=" uk-form" th:if="${outcomeDate == null}">
             <input name="fromDate" type="date" th:value="${fromDate}"/> ~
@@ -69,38 +64,45 @@
             <button class="uk-button">Go</button>
         </form>
         <ul class="uk-pagination" th:if="${outcomeDate != null}">
-            <li class="uk-pagination-previous"><a th:href="@{'/outcomes/' + ${outcomeDate.minusDays(1)}}"
-                                                  th:text="${outcomeDate.minusDays(1)}">...</a></li>
+            <li class="uk-pagination-previous"><a th:href="@{'/outcomes/' + ${outcomeDate.minusDays(1)}}">
+                <i class="uk-icon-angle-double-left"></i> <span th:text="${outcomeDate.minusDays(1)}"></span></a></li>
             <li>
                 <a th:href="@{'/report'(fromDate=${outcomeDate.with(T(java.time.temporal.TemporalAdjusters).firstDayOfMonth())})}"
                    th:text="${outcomeDate.year + '-' + outcomeDate.monthValue}">...</a></li>
-            <li class="uk-pagination-next"><a th:href="@{'/outcomes/' + ${outcomeDate.plusDays(1)}}"
-                                              th:text="${outcomeDate.plusDays(1)}">...</a></li>
+            <li class="uk-pagination-next"><a th:href="@{'/outcomes/' + ${outcomeDate.plusDays(1)}}">
+                <span th:text="${outcomeDate.plusDays(1)}"></span> <i class="uk-icon-angle-double-right"></i></a></li>
         </ul>
-        <table class="uk-table uk-table-striped">
+        <table class="uk-table uk-table-condensed">
             <thead>
             <tr>
-                <th>支出日</th>
-                <th>カテゴリ</th>
-                <th>支出名</th>
-                <th>金額</th>
-                <th><i class="uk-icon-credit-card"></i></th>
+                <th rowspan="2" width="15%">支出日<br/>&nbsp;</th>
+                <th rowspan="2" width="27%">カテゴリ<br/>&nbsp;</th>
+                <th width="28%">支出名</th>
+                <th width="30%">金額</th>
+            </tr>
+            <tr>
                 <th>支出者</th>
                 <th>操作</th>
             </tr>
             </thead>
             <tbody>
-            <tr th:each="outcome : ${outcomes}">
-                <td><a th:href="@{'/outcomes'(fromDate=${outcome.outcomeDate},toDate=${outcome.outcomeDate})}"
-                       th:text="${outcome.outcomeDate}"></a></td>
-                <td>
-                    <a th:href="@{'/outcomes'(fromDate=${fromDate},toDate=${toDate},parentCategoryId=${outcome.parentCategoryId})}"
-                       th:text="${outcome.parentCategoryName}"></a> (<span
-                        th:text="${outcome.categoryName}"></span>)
+            <!--/*/ <th:block th:each="outcome : ${outcomes}"> /*/-->
+            <tr>
+                <td rowspan="2"><a
+                        th:href="@{'/outcomes'(fromDate=${outcome.outcomeDate},toDate=${outcome.outcomeDate})}">
+                    <span th:text="${outcome.outcomeDate.year}"></span><br/>
+                    <span th:text="${outcome.outcomeDate.monthValue}"></span>/<span
+                        th:text="${outcome.outcomeDate.dayOfMonth}"></span></a></td>
+                <td rowspan="2"><a
+                        th:href="@{'/outcomes'(fromDate=${fromDate},toDate=${toDate},parentCategoryId=${outcome.parentCategoryId})}"
+                        th:text="${outcome.parentCategoryName}"></a><br/>
+                    <span th:text="${outcome.categoryName}"></span>
                 </td>
                 <td><span th:text="${outcome.outcomeName}"></span></td>
-                <td><span th:text="${outcome.amount}"></span>円 x <span th:text="${outcome.quantity}"></span></td>
-                <td><i class="uk-icon-check-square" th:if="${outcome.creditCard}"></i></td>
+                <td><span th:text="${outcome.amount}"></span>円 x <span th:text="${outcome.quantity}"></span>
+                    <i class="uk-icon-credit-card" th:if="${outcome.creditCard}"></i></td>
+            </tr>
+            <tr>
                 <td><span th:text="${outcome.memberName}"></span></td>
                 <td>
                     <div class="uk-button-group"
@@ -112,6 +114,7 @@
                     </div>
                 </td>
             </tr>
+            <!--/*/ </th:block> /*/-->
             </tbody>
             <tfoot>
             <tr>
@@ -119,13 +122,13 @@
                 <td>&nbsp;</td>
                 <th>計</th>
                 <td><span th:text="${total}"></span>円</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
             </tr>
             </tfoot>
         </table>
     </div>
+    <form th:action="@{/logout}" method="post" class="uk-form uk-margin-remove uk-display-inline-block">
+        <button class="uk-button"><i class="uk-icon-sign-out"></i> Logout</button>
+    </form>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.0/lodash.min.js"></script>
     <script>
@@ -184,6 +187,7 @@
                             var b = _.last(f.querySelectorAll('button'));
                             b.innerText = "更新";
                             b.className = b.className + " uk-button-success";
+                            window.scroll(0, 0);
                         }
                     });
             return false;

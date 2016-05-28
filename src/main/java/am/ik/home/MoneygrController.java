@@ -53,7 +53,7 @@ public class MoneygrController {
                 Spliterators.spliteratorUnknownSize(members.get("_embedded").get("members").elements(), Spliterator.ORDERED), false)
                 .collect(toMap(
                         node -> node.get("memberId").asText(),
-                        node -> node.get("familyName").asText() + " " + node.get("givenName").asText()
+                        node -> node.get("givenName").asText()
                 ));
         return memberMap;
     }
@@ -158,7 +158,7 @@ public class MoneygrController {
 
     @RequestMapping(path = "/report")
     String report(Model model) {
-        return report(model, LocalDate.now(), Optional.empty());
+        return report(model, LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()), Optional.empty());
     }
 
     @RequestMapping(path = "/report", params = "fromDate")
