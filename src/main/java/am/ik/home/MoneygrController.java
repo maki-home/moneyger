@@ -1,6 +1,5 @@
 package am.ik.home;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -11,7 +10,6 @@ import org.springframework.http.RequestEntity;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.CollectionUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,10 +21,6 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import static java.util.stream.Collectors.*;
 
 @Controller
 public class MoneygrController {
@@ -34,6 +28,8 @@ public class MoneygrController {
     OAuth2RestTemplate restTemplate;
     @Autowired
     MoneygrUser user;
+    @Autowired
+    SessionCache cache;
     @Value("${inout.uri}")
     URI inoutUri;
     @Value("${member.uri}")
@@ -43,43 +39,6 @@ public class MoneygrController {
     String index() {
         return "index";
     }
-
-    Map<String, String> memberMap(Collection<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return Collections.emptyMap();
-        }
-        JsonNode members = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(memberUri)
-                        .pathSegment("members", "search", "findByIds")
-                        .queryParam("ids", ids.toArray())
-                        .build().toUri()).build(),
-                JsonNode.class)
-                .getBody();
-        Map<String, String> memberMap = StreamSupport.stream(
-                Spliterators.spliteratorUnknownSize(members.get("_embedded").get("members").elements(), Spliterator.ORDERED), false)
-                .collect(toMap(
-                        node -> node.get("memberId").asText(),
-                        node -> node.get("givenName").asText()
-                ));
-        return memberMap;
-    }
-
-    Map<String, Map<Integer, String>> categories() {
-        JsonNode categories = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
-                        .pathSegment("outcomeCategories")
-                        .build().toUri()).build(),
-                JsonNode.class)
-                .getBody();
-        Map<String, Map<Integer, String>> cat = new LinkedHashMap<>();
-        for (JsonNode node : categories.get("_embedded").get("outcomeCategories")) {
-            String key = node.get("parentOutcomeCategory").get("parentCategoryName").asText();
-            cat.computeIfAbsent(key, x -> new LinkedHashMap<>());
-            cat.get(key).put(node.get("categoryId").asInt(), node.get("categoryName").asText());
-        }
-        return cat;
-    }
-
 
     @RequestMapping(path = "outcomes")
     String showOutcomes(Model model) {
@@ -107,14 +66,15 @@ public class MoneygrController {
                 new ParameterizedTypeReference<Resources<Outcome>>() {
                 }
         ).getBody();
-        Map<String, String> memberMap = memberMap(outcomes.getContent().stream().map(Outcome::getOutcomeBy).distinct().collect(Collectors.toList()));
+        Map<String, String> memberMap = cache.getMembers();
         outcomes.forEach(o -> o.setMemberMap(memberMap));
         model.addAttribute("fromDate", fromDate);
         model.addAttribute("toDate", to);
         model.addAttribute("outcomes", outcomes);
         model.addAttribute("total", outcomes.getContent().stream().mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
         model.addAttribute("user", user);
-        model.addAttribute("categories", categories());
+        model.addAttribute("categories", cache.getCategories());
+        model.addAttribute("members", cache.getMembers());
         return "outcomes";
     }
 
@@ -135,7 +95,7 @@ public class MoneygrController {
                 }
         ).getBody();
 
-        Map<String, String> memberMap = memberMap(outcomes.getContent().stream().map(Outcome::getOutcomeBy).distinct().collect(Collectors.toList()));
+        Map<String, String> memberMap = cache.getMembers();
         outcomes.forEach(o -> o.setMemberMap(memberMap));
 
         model.addAttribute("fromDate", fromDate);
@@ -143,9 +103,10 @@ public class MoneygrController {
         model.addAttribute("outcomes", outcomes);
         model.addAttribute("total", outcomes.getContent().stream().mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
         model.addAttribute("user", user);
-        Map<String, Map<Integer, String>> categories = categories();
+        Map<String, Map<Integer, String>> categories = cache.getCategories();
         model.addAttribute("categories", categories);
         model.addAttribute("parentCategory", categories.entrySet().stream().map(Map.Entry::getKey).toArray()[parentCategoryId - 1]);
+        model.addAttribute("members", cache.getMembers());
         return "outcomes";
     }
 

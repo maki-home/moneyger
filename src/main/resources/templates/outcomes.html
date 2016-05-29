@@ -57,6 +57,13 @@
                         th:value="${value.key}"></option>
                 <!--/*/ </th:block> /*/-->
             </select><br/>
+            <select class="uk-form-select" name="outcomeBy">
+                <option value="">支出者</option>
+                <option th:each="member : ${members}"
+                        th:label="${member.value }"
+                        th:value="${member.key}"
+                        th:selected="${member.key == user.userId}"></option>
+            </select><br/>
             <label><input th:field="*{creditCard}" class="uk-form" type="checkbox"/> <i
                     class="uk-icon-credit-card uk-icon-medium"></i></label>
             <input type="hidden" name="outcomeId"/>
