@@ -5,8 +5,12 @@ applications:
     instances: 1
     path: target/moneygr-0.0.1-SNAPSHOT.jar
     buildpack: java_buildpack_offline
+    domains:
+      - ik.am
+      - cfapps.pez.pivotal.io
+    host: moneygr
     env:
-      auth-server: https://home-uaa.cfapps.pez.pivotal.io/uaa
+      auth-server: https://home.cfapps.pez.pivotal.io/uaa
       inout.uri: https://income-outcome.cfapps.pez.pivotal.io/api
       security.oauth2.client.client-id: 6f747ee3-e933-40cd-93af-ae40780449c8
       security.oauth2.client.client-secret: a0f6513e-ce22-42c8-bd1c-5d3498451042
