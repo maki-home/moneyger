@@ -14,9 +14,11 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
@@ -70,6 +72,26 @@ public class MoneygrController {
         outcomes.forEach(o -> o.setMemberMap(memberMap));
         model.addAttribute("fromDate", fromDate);
         model.addAttribute("toDate", to);
+        model.addAttribute("outcomes", outcomes);
+        model.addAttribute("total", outcomes.getContent().stream().mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
+        model.addAttribute("user", user);
+        model.addAttribute("categories", cache.getCategories());
+        model.addAttribute("members", cache.getMembers());
+        return "outcomes";
+    }
+
+    @RequestMapping(path = "outcomes", params = "keyword")
+    String searchOutcomes(Model model, @RequestParam String keyword) throws IOException {
+        Resources<Outcome> outcomes = restTemplate.exchange(
+                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
+                        .pathSegment("outcomes", "search", "findByOutcomeNameContaining")
+                        .queryParam("outcomeName", UriUtils.encodeQueryParam(keyword, "UTF-8"))
+                        .build(true).toUri()).build(),
+                new ParameterizedTypeReference<Resources<Outcome>>() {
+                }
+        ).getBody();
+        Map<String, String> memberMap = cache.getMembers();
+        outcomes.forEach(o -> o.setMemberMap(memberMap));
         model.addAttribute("outcomes", outcomes);
         model.addAttribute("total", outcomes.getContent().stream().mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
         model.addAttribute("user", user);

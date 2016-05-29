@@ -69,6 +69,11 @@
             <input type="hidden" name="outcomeId"/>
             <button class="uk-button uk-button-primary">登録</button>
         </form>
+        <h3>簡易支出検索</h3>
+        <form class=" uk-form" method="get">
+            <input name="keyword"/>
+            <button class="uk-button">検索</button>
+        </form>
         <h3>支出一覧 <span th:if="${parentCategory != null}" th:text="${'('+ parentCategory + ')'}"></span></h3>
         <form method="get" class=" uk-form" th:if="${outcomeDate == null}">
             <input name="fromDate" type="date" th:value="${fromDate}"/> ~
