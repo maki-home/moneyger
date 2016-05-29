@@ -11,6 +11,7 @@ import org.springframework.http.RequestEntity;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.*;
@@ -43,11 +44,14 @@ public class MoneygrController {
         return "index";
     }
 
-    Map<String, String> memberMap(Stream<String> ids) {
+    Map<String, String> memberMap(Collection<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
         JsonNode members = restTemplate.exchange(
                 RequestEntity.get(UriComponentsBuilder.fromUri(memberUri)
                         .pathSegment("members", "search", "findByIds")
-                        .queryParam("ids", ids.distinct().toArray())
+                        .queryParam("ids", ids.toArray())
                         .build().toUri()).build(),
                 JsonNode.class)
                 .getBody();
@@ -103,7 +107,7 @@ public class MoneygrController {
                 new ParameterizedTypeReference<Resources<Outcome>>() {
                 }
         ).getBody();
-        Map<String, String> memberMap = memberMap(outcomes.getContent().stream().map(Outcome::getOutcomeBy));
+        Map<String, String> memberMap = memberMap(outcomes.getContent().stream().map(Outcome::getOutcomeBy).distinct().collect(Collectors.toList()));
         outcomes.forEach(o -> o.setMemberMap(memberMap));
         model.addAttribute("fromDate", fromDate);
         model.addAttribute("toDate", to);
@@ -131,7 +135,7 @@ public class MoneygrController {
                 }
         ).getBody();
 
-        Map<String, String> memberMap = memberMap(outcomes.getContent().stream().map(Outcome::getOutcomeBy));
+        Map<String, String> memberMap = memberMap(outcomes.getContent().stream().map(Outcome::getOutcomeBy).distinct().collect(Collectors.toList()));
         outcomes.forEach(o -> o.setMemberMap(memberMap));
 
         model.addAttribute("fromDate", fromDate);
