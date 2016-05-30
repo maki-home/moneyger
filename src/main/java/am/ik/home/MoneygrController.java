@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
@@ -21,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
@@ -75,7 +77,7 @@ public class MoneygrController {
         model.addAttribute("outcomes", outcomes);
         model.addAttribute("total", outcomes.getContent().stream().mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
         model.addAttribute("user", user);
-        model.addAttribute("categories", cache.getCategories());
+        model.addAttribute("categories", cache.getOutcomeCategories());
         model.addAttribute("members", cache.getMembers());
         return "outcomes";
     }
@@ -95,7 +97,7 @@ public class MoneygrController {
         model.addAttribute("outcomes", outcomes);
         model.addAttribute("total", outcomes.getContent().stream().mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
         model.addAttribute("user", user);
-        model.addAttribute("categories", cache.getCategories());
+        model.addAttribute("categories", cache.getOutcomeCategories());
         model.addAttribute("members", cache.getMembers());
         return "outcomes";
     }
@@ -125,7 +127,7 @@ public class MoneygrController {
         model.addAttribute("outcomes", outcomes);
         model.addAttribute("total", outcomes.getContent().stream().mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
         model.addAttribute("user", user);
-        Map<String, Map<Integer, String>> categories = cache.getCategories();
+        Map<String, Map<Integer, String>> categories = cache.getOutcomeCategories();
         model.addAttribute("categories", categories);
         model.addAttribute("parentCategory", categories.entrySet().stream().map(Map.Entry::getKey).toArray()[parentCategoryId - 1]);
         model.addAttribute("members", cache.getMembers());
@@ -145,6 +147,53 @@ public class MoneygrController {
         Cookie cookie = new Cookie("creditCard", String.valueOf(outcome.isCreditCard()));
         response.addCookie(cookie);
         return "redirect:/outcomes/" + outcome.getOutcomeDate();
+    }
+
+    @RequestMapping(path = "incomes")
+    String showIncomes(Model model) {
+        return showIncomes(model, LocalDate.now(), Optional.empty());
+    }
+
+    @RequestMapping(path = "incomes", params = "fromDate")
+    String showIncomes(Model model, @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam LocalDate fromDate,
+                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
+        LocalDate to = toDate.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
+
+        Resources<Income> incomes = restTemplate.exchange(
+                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
+                        .pathSegment("incomes", "search", "findByIncomeDate")
+                        .queryParam("fromDate", fromDate)
+                        .queryParam("toDate", to)
+                        .build().toUri()).build(),
+                new ParameterizedTypeReference<Resources<Income>>() {
+                }
+        ).getBody();
+        Map<String, String> memberMap = cache.getMembers();
+        incomes.forEach(o -> o.setMemberMap(memberMap));
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", to);
+        model.addAttribute("incomes", incomes);
+        model.addAttribute("total", incomes.getContent().stream().mapToInt(Income::getAmount).sum());
+        model.addAttribute("user", user);
+        model.addAttribute("categories", cache.getIncomeCategories());
+        model.addAttribute("members", cache.getMembers());
+        return "incomes";
+    }
+
+
+    @RequestMapping(path = "incomes", method = RequestMethod.POST)
+    String registerIncome(@Validated Income income, BindingResult result, Model model, RedirectAttributes attributes) {
+        if (result.hasErrors()) {
+            return income.getIncomeDate() == null ? showIncomes(model) : showIncomes(model, income.getIncomeDate(), Optional.empty());
+        }
+        RequestEntity<Income> req = RequestEntity.post(UriComponentsBuilder.fromUri(inoutUri)
+                .pathSegment("incomes")
+                .build().toUri()).body(income);
+        restTemplate.exchange(req, new ParameterizedTypeReference<Resource<Income>>() {
+        });
+        LocalDate date = income.getIncomeDate().with(TemporalAdjusters.firstDayOfMonth());
+        attributes.addAttribute("fromDate", date.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        return "redirect:/incomes";
     }
 
     @RequestMapping(path = "/report")
@@ -189,5 +238,12 @@ public class MoneygrController {
         Outcome outcome = new Outcome();
         outcome.setCreditCard(isCreditCard);
         return outcome;
+    }
+
+    @ModelAttribute
+    Income income() {
+        Income income = new Income();
+        income.setIncomeDate(LocalDate.now());
+        return income;
     }
 }

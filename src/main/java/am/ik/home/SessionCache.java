@@ -21,7 +21,8 @@ import static java.util.stream.Collectors.toMap;
 @Scope(value = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class SessionCache {
 
-    private Map<String, Map<Integer, String>> categories = Collections.emptyMap();
+    private Map<String, Map<Integer, String>> outcomeCategories = Collections.emptyMap();
+    private Map<Integer, String> incomeCategories = Collections.emptyMap();
     private Map<String, String> members = Collections.emptyMap();
 
     @Autowired
@@ -33,19 +34,24 @@ public class SessionCache {
 
     @PostConstruct
     public void init() {
-        this.categories = Collections.unmodifiableMap(categories());
+        this.outcomeCategories = Collections.unmodifiableMap(outcomeCategories());
+        this.incomeCategories = Collections.unmodifiableMap(incomeCategories());
         this.members = Collections.unmodifiableMap(members());
     }
 
-    public Map<String, Map<Integer, String>> getCategories() {
-        return categories;
+    public Map<String, Map<Integer, String>> getOutcomeCategories() {
+        return outcomeCategories;
+    }
+
+    public Map<Integer, String> getIncomeCategories() {
+        return incomeCategories;
     }
 
     public Map<String, String> getMembers() {
         return members;
     }
 
-    private Map<String, Map<Integer, String>> categories() {
+    private Map<String, Map<Integer, String>> outcomeCategories() {
         JsonNode categories = restTemplate.exchange(
                 RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
                         .pathSegment("outcomeCategories")
@@ -58,6 +64,19 @@ public class SessionCache {
             cat.computeIfAbsent(key, x -> new LinkedHashMap<>());
             cat.get(key).put(node.get("categoryId").asInt(), node.get("categoryName").asText());
         }
+        return cat;
+    }
+
+    private Map<Integer, String> incomeCategories() {
+        JsonNode categories = restTemplate.exchange(
+                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
+                        .pathSegment("incomeCategories")
+                        .build().toUri()).build(),
+                JsonNode.class)
+                .getBody();
+        Map<Integer, String> cat = StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(categories.get("_embedded").get("incomeCategories").elements(), Spliterator.ORDERED), false)
+                .collect(toMap(node -> node.get("categoryId").asInt(), node -> node.get("categoryName").asText()));
         return cat;
     }
 

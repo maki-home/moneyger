@@ -16,7 +16,7 @@
         </nav>
         <ul class="uk-tab" data-uk-tab="">
             <li><a th:href="@{/outcomes}">支出</a></li>
-            <li><a href="#" onclick="alert('準備中')">収入</a></li>
+            <li><a th:href="@{/incomes}">収入</a></li>
             <li><a th:href="@{/report}">今月のレポート</a></li>
             <li><a th:href="@{${@environment.getProperty('auth-server', 'http://localhost:9999/uaa')}}"><i
                     class="uk-icon-user"></i> <span th:text="${user.displayName}"></span></a></li>

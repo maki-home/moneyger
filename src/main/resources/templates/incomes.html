@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Moneygr</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/2.26.3/css/uikit.gradient.min.css"/>
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}"/>
+</head>
+<body>
+<div class="uk-grid">
+    <div class="uk-width-10-10">
+        <nav class="uk-navbar">
+            <a th:href="@{/outcomes}" class="uk-navbar-brand">家計簿</a>
+        </nav>
+        <ul class="uk-tab" data-uk-tab="">
+            <li><a th:href="@{/outcomes}">支出</a></li>
+            <li><a th:href="@{/incomes}">収入</a></li>
+            <li><a th:href="@{/report}">今月のレポート</a></li>
+            <li><a th:href="@{${@environment.getProperty('auth-server', 'http://localhost:9999/uaa')}}"><i
+                    class="uk-icon-user"></i> <span th:text="${user.displayName}"></span></a></li>
+        </ul>
+        <h3>収入登録</h3>
+
+        <div th:object="${income}">
+            <div class="uk-alert uk-alert-danger" th:if="${#fields.hasErrors()}">
+                <ul>
+                    <li th:each="error : ${#fields.detailedErrors()}">
+                        <span th:text="${error.getMessage()}">Error message</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <form id="incomeForm" th:action="@{/incomes}" method="post" th:object="${income}"
+              class="uk-panel uk-panel-box uk-form">
+            <input class="uk-form" name="incomeDate" type="date" placeholder="収入日" th:field="*{incomeDate}"/><br/>
+            <input class="uk-form" name="incomeName" type="text" placeholder="収入名"/><br/>
+            <input class="uk-form" name="amount" type="number" pattern="\d*" placeholder="金額"/><br/>
+            <select class="uk-form-select" name="incomeCategory.categoryId">
+                <option value="">カテゴリ</option>
+                <option th:each="value : ${categories}"
+                        th:label="${value.value}"
+                        th:value="${value.key}"></option>
+            </select><br/>
+            <select class="uk-form-select" name="incomeBy">
+                <option value="">収入者</option>
+                <option th:each="member : ${members}"
+                        th:label="${member.value }"
+                        th:value="${member.key}"
+                        th:selected="${member.key == user.userId}"></option>
+            </select><br/>
+            <input type="hidden" name="incomeId"/>
+            <button class="uk-button uk-button-primary">登録</button>
+        </form>
+        <h3>収入一覧</h3>
+        <form method="get" class=" uk-form">
+            <input name="fromDate" type="date" th:value="${fromDate}"/> ~
+            <input name="toDate" type="date" th:value="${toDate}"/>
+            <button class="uk-button">Go</button>
+        </form>
+        <ul class="uk-pagination">
+            <li class="uk-pagination-previous"><a
+                    th:href="@{'/incomes/'(fromDate=${fromDate.minusMonths(1).with(T(java.time.temporal.TemporalAdjusters).firstDayOfMonth())})}">
+                <i class="uk-icon-angle-double-left"></i> <span
+                    th:text="${fromDate.minusMonths(1).with(T(java.time.temporal.TemporalAdjusters).firstDayOfMonth())}"></span></a>
+            </li>
+            <li class="uk-pagination-next"><a
+                    th:href="@{'/incomes/'(fromDate=${fromDate.plusMonths(1).with(T(java.time.temporal.TemporalAdjusters).firstDayOfMonth())})}">
+                <span th:text="${fromDate.plusMonths(1).with(T(java.time.temporal.TemporalAdjusters).firstDayOfMonth())}"></span>
+                <i class="uk-icon-angle-double-right"></i></a></li>
+        </ul>
+        <table class="uk-table uk-table-condensed">
+            <thead>
+            <tr>
+                <th rowspan="2" width="15%">収入日<br/>&nbsp;</th>
+                <th rowspan="2" width="27%">カテゴリ<br/>&nbsp;</th>
+                <th width="28%">収入名</th>
+                <th width="30%">金額</th>
+            </tr>
+            <tr>
+                <th>収入者</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!--/*/ <th:block th:each="income : ${incomes}"> /*/-->
+            <tr>
+                <td rowspan="2"><span th:text="${income.incomeDate}"></span></td>
+                <td rowspan="2"><span th:text="${income.categoryName}"></span></td>
+                <td><span th:text="${income.incomeName}"></span></td>
+                <td><span th:text="${income.amount}"></span>円</td>
+            </tr>
+            <tr>
+                <td><span th:text="${income.memberName}"></span></td>
+                <td>
+                    <div class="uk-button-group"
+                         th:attr="data-id=${income.incomeId}">
+                        <button class="uk-button uk-button-small" onclick="loadFromServer(this)"><i
+                                class="uk-icon-edit"></i></button>
+                        <button class="uk-button uk-button-small uk-button-danger"
+                                onclick="return deleteIncome(this);"><i class="uk-icon-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+            <!--/*/ </th:block> /*/-->
+            </tbody>
+            <tfoot>
+            <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <th>計</th>
+                <td><span th:text="${total}"></span>円</td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+    <form th:action="@{/logout}" method="post" class="uk-form uk-margin-remove uk-display-inline-block">
+        <button class="uk-button"><i class="uk-icon-sign-out"></i> Logout</button>
+    </form>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.0/lodash.min.js"></script>
+    <script>
+        var request = window.superagent;
+
+        function deleteIncome(button) {
+            if (confirm("本当に削除しますか?")) {
+                request.del('/api/incomes/' + button.parentNode.dataset.id)
+                        .set('X-CSRF-TOKEN', document.forms[0]._csrf.value)
+                        .end(function (err, res) {
+                            if (res.status == 204) {
+                                location.reload();
+                            }
+                        });
+            }
+            return false;
+        }
+
+        function loadFromServer(button) {
+            request.get('/api/incomes/' + button.parentNode.dataset.id)
+                    .end(function (err, res) {
+                        if (res.status == 200) {
+                            var f = document.querySelector("#incomeForm");
+                            var income = JSON.parse(res.text);
+                            request.get(income._links.incomeCategory.href.replace('api/incomes/', '' /* remove dup */))
+                                    .end(function (err, res) {
+                                        var category = JSON.parse(res.text);
+                                        f.querySelector("select").value = category.categoryId;
+                                    });
+                            for (var k in income) {
+                                if (f[k]) {
+                                    f[k].value = income[k];
+                                }
+                            }
+                            var b = _.last(f.querySelectorAll('button'));
+                            b.innerText = "更新";
+                            b.className = b.className + " uk-button-success";
+                            window.scroll(0, 0);
+                        }
+                    });
+            return false;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+        }, false);
+
+
+    </script>
+</div>
+</body>
+</html>
