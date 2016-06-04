@@ -34,7 +34,7 @@
         </div>
         <form id="incomeForm" th:action="@{/incomes}" method="post" th:object="${income}"
               class="uk-panel uk-panel-box uk-form">
-            <input class="uk-form" name="incomeDate" type="date" placeholder="収入日" th:field="*{incomeDate}"/><br/>
+            <input class="uk-form" name="incomeDate" type="date" placeholder="収入日" th:value="${fromDate}"/><br/>
             <input class="uk-form" name="incomeName" type="text" placeholder="収入名"/><br/>
             <input class="uk-form" name="amount" type="number" pattern="\d*" placeholder="金額"/><br/>
             <select class="uk-form-select" name="incomeCategory.categoryId">
