@@ -2,19 +2,14 @@ package am.ik.home;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
-import org.springframework.http.RequestEntity;
-import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
 import javax.servlet.http.Cookie;
@@ -30,7 +25,9 @@ import java.util.stream.Collectors;
 @Controller
 public class MoneygrController {
     @Autowired
-    OAuth2RestTemplate restTemplate;
+    OutcomeClient outcomeClient;
+    @Autowired
+    IncomeClient incomeClient;
     @Autowired
     MoneygrUser user;
     @Autowired
@@ -61,16 +58,8 @@ public class MoneygrController {
     String showOutcomes(Model model, @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam LocalDate fromDate,
                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
         LocalDate to = toDate.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
-
-        Resources<Outcome> outcomes = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
-                        .pathSegment("outcomes", "search", "findByOutcomeDate")
-                        .queryParam("fromDate", fromDate)
-                        .queryParam("toDate", to)
-                        .build().toUri()).build(),
-                new ParameterizedTypeReference<Resources<Outcome>>() {
-                }
-        ).getBody();
+        Resources<Outcome> outcomes = outcomeClient.findByOutcomeDate(fromDate, to);
+        System.out.println(outcomes);
         Map<String, String> memberMap = cache.getMembers();
         outcomes.forEach(o -> o.setMemberMap(memberMap));
         model.addAttribute("fromDate", fromDate);
@@ -85,14 +74,7 @@ public class MoneygrController {
 
     @RequestMapping(path = "outcomes", params = "keyword")
     String searchOutcomes(Model model, @RequestParam String keyword) throws IOException {
-        Resources<Outcome> outcomes = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
-                        .pathSegment("outcomes", "search", "findByOutcomeNameContaining")
-                        .queryParam("outcomeName", UriUtils.encodeQueryParam(keyword, "UTF-8"))
-                        .build(true).toUri()).build(),
-                new ParameterizedTypeReference<Resources<Outcome>>() {
-                }
-        ).getBody();
+        Resources<Outcome> outcomes = outcomeClient.findByOutcomeNameContaining(UriUtils.encodeQueryParam(keyword, "UTF-8"));
         Map<String, String> memberMap = cache.getMembers();
         outcomes.forEach(o -> o.setMemberMap(memberMap));
         model.addAttribute("outcomes", outcomes);
@@ -110,15 +92,7 @@ public class MoneygrController {
                                           @RequestParam Integer parentCategoryId) {
         LocalDate to = toDate.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
 
-        Resources<Outcome> outcomes = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
-                        .pathSegment("outcomes", "search", "findByParentCategoryId")
-                        .queryParam("parentCategoryId", parentCategoryId)
-                        .queryParam("fromDate", fromDate)
-                        .queryParam("toDate", to)
-                        .build().toUri()).build(), new ParameterizedTypeReference<Resources<Outcome>>() {
-                }
-        ).getBody();
+        Resources<Outcome> outcomes = outcomeClient.findByParentCategoryId(parentCategoryId, fromDate, to);
 
         Map<String, String> memberMap = cache.getMembers();
         outcomes.forEach(o -> o.setMemberMap(memberMap));
@@ -140,11 +114,7 @@ public class MoneygrController {
         if (result.hasErrors()) {
             return outcome.getOutcomeDate() == null ? showOutcomes(model) : showOutcomes(model, outcome.getOutcomeDate());
         }
-        RequestEntity<Outcome> req = RequestEntity.post(UriComponentsBuilder.fromUri(inoutUri)
-                .pathSegment("outcomes")
-                .build().toUri()).body(outcome);
-        restTemplate.exchange(req, new ParameterizedTypeReference<Resource<Outcome>>() {
-        });
+        outcomeClient.postOutcome(outcome);
         Cookie cookie = new Cookie("creditCard", String.valueOf(outcome.isCreditCard()));
         response.addCookie(cookie);
         return "redirect:/outcomes/" + outcome.getOutcomeDate();
@@ -160,15 +130,7 @@ public class MoneygrController {
                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
         LocalDate to = toDate.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
 
-        Resources<Income> incomes = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
-                        .pathSegment("incomes", "search", "findByIncomeDate")
-                        .queryParam("fromDate", fromDate)
-                        .queryParam("toDate", to)
-                        .build().toUri()).build(),
-                new ParameterizedTypeReference<Resources<Income>>() {
-                }
-        ).getBody();
+        Resources<Income> incomes = incomeClient.findByIncomeDate(fromDate, to);
         Map<String, String> memberMap = cache.getMembers();
         incomes.forEach(o -> o.setMemberMap(memberMap));
         model.addAttribute("fromDate", fromDate);
@@ -187,11 +149,7 @@ public class MoneygrController {
         if (result.hasErrors()) {
             return income.getIncomeDate() == null ? showIncomes(model) : showIncomes(model, income.getIncomeDate(), Optional.empty());
         }
-        RequestEntity<Income> req = RequestEntity.post(UriComponentsBuilder.fromUri(inoutUri)
-                .pathSegment("incomes")
-                .build().toUri()).body(income);
-        restTemplate.exchange(req, new ParameterizedTypeReference<Resource<Income>>() {
-        });
+        incomeClient.postIncome(income);
         LocalDate date = income.getIncomeDate().with(TemporalAdjusters.firstDayOfMonth());
         attributes.addAttribute("fromDate", date.format(DateTimeFormatter.ISO_LOCAL_DATE));
         return "redirect:/incomes";
@@ -207,35 +165,10 @@ public class MoneygrController {
                   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam LocalDate fromDate,
                   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
         LocalDate to = toDate.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
-        List<Outcome.SummaryByDate> summaryByDate = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
-                        .pathSegment("outcomes", "reportByDate")
-                        .queryParam("fromDate", fromDate)
-                        .queryParam("toDate", to)
-                        .build().toUri()).build(), new ParameterizedTypeReference<List<Outcome.SummaryByDate>>() {
-                }
-        ).getBody();
-        List<Outcome.SummaryByParentCategory> summaryByParentCategory = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
-                        .pathSegment("outcomes", "reportByParentCategory")
-                        .queryParam("fromDate", fromDate)
-                        .queryParam("toDate", to)
-                        .build().toUri()).build(),
-                new ParameterizedTypeReference<List<Outcome.SummaryByParentCategory>>() {
-                }
-        ).getBody();
-
+        List<Outcome.SummaryByDate> summaryByDate = outcomeClient.reportByDate(fromDate, to);
+        List<Outcome.SummaryByParentCategory> summaryByParentCategory = outcomeClient.reportByParentCategory(fromDate, to);
         // TODO use Report API
-        Resources<Income> incomes = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
-                        .pathSegment("incomes", "search", "findByIncomeDate")
-                        .queryParam("fromDate", fromDate)
-                        .queryParam("toDate", to)
-                        .build().toUri()).build(),
-                new ParameterizedTypeReference<Resources<Income>>() {
-                }
-        ).getBody();
-
+        Resources<Income> incomes = incomeClient.findByIncomeDate(fromDate, to);
 
         long outcomeTotal = summaryByDate.stream().mapToLong(Outcome.SummaryByDate::getSubTotal).sum();
         long incomeTotal = incomes.getContent().stream().mapToLong(Income::getAmount).sum();
