@@ -5,6 +5,8 @@ applications:
     instances: 1
     path: target/moneygr-0.0.1-SNAPSHOT.jar
     buildpack: java_buildpack_offline
+    services:
+    - logstash
     domains:
       - ik.am
       - cfapps.pez.pivotal.io
