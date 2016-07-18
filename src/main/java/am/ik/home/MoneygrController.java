@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 public class MoneygrController {
@@ -240,13 +241,28 @@ public class MoneygrController {
         long incomeTotal = incomes.getContent().stream().mapToLong(Income::getAmount).sum();
         model.addAttribute("fromDate", fromDate);
         model.addAttribute("toDate", to);
-        model.addAttribute("outcomeSummaryByDate", summaryByDate);
+        if (summaryByDate.size() <= 31) {
+            model.addAttribute("outcomeSummaryByDate", summaryByDate);
+        } else {
+            model.addAttribute("outcomeSummaryByMonth", summarizeByMonth(summaryByDate));
+        }
         model.addAttribute("outcomeSummaryByParentCategory", summaryByParentCategory);
         model.addAttribute("outcomeTotal", outcomeTotal);
         model.addAttribute("incomeTotal", incomeTotal);
         model.addAttribute("inout", incomeTotal - outcomeTotal);
         model.addAttribute("user", user);
         return "report";
+    }
+
+    List<Outcome.SummaryByDate> summarizeByMonth(List<Outcome.SummaryByDate> outcomes) {
+        return outcomes.stream()
+                .collect(Collectors.groupingBy(x -> LocalDate.of(x.getOutcomeDate().getYear(), x.getOutcomeDate().getMonth(), 1)))
+                .entrySet()
+                .stream()
+                .map(x -> new Outcome.SummaryByDate(x.getKey(),
+                        x.getValue().stream().map(Outcome.SummaryByDate::getSubTotal).mapToLong(Long::longValue).sum()))
+                .sorted(Comparator.comparing(Outcome.SummaryByDate::getOutcomeDate).reversed())
+                .collect(Collectors.toList());
     }
 
     @ModelAttribute

@@ -59,7 +59,7 @@
         <h3>支出</h3>
         <a th:href="@{/outcomes(fromDate=${fromDate},toDate=${toDate})}">この期間の全支出</a>
 
-        <table class="uk-table uk-table-striped uk-table-condensed">
+        <table class="uk-table uk-table-striped uk-table-condensed" th:if="${outcomeSummaryByDate != null}">
             <thead>
             <tr>
                 <th>支出日</th>
@@ -69,6 +69,29 @@
             <tbody>
             <tr th:each="outcome : ${outcomeSummaryByDate}">
                 <td><a th:href="@{'/outcomes/' + ${outcome.outcomeDate}}" th:text="${outcome.outcomeDate}"></a></td>
+                <td><span th:text="${#numbers.formatInteger(outcome.subTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>計</th>
+                <td><span th:text="${#numbers.formatInteger(outcomeTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            </tfoot>
+        </table>
+
+        <table class="uk-table uk-table-striped uk-table-condensed" th:if="${outcomeSummaryByMonth != null}">
+            <thead>
+            <tr>
+                <th>支出月</th>
+                <th>金額</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="outcome : ${outcomeSummaryByMonth}">
+                <td><a th:href="@{'/outcomes/'(fromDate=${outcome.outcomeDate})}"
+                       th:text="${outcome.outcomeDate.year + '-' + outcome.outcomeDate.monthValue}"></a>
+                </td>
                 <td><span th:text="${#numbers.formatInteger(outcome.subTotal, 3, 'COMMA')}"></span>円</td>
             </tr>
             </tbody>

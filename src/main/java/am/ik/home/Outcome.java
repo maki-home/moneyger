@@ -1,6 +1,8 @@
 package am.ik.home;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -78,6 +80,8 @@ public class Outcome implements Serializable {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SummaryByDate implements Serializable {
         private LocalDate outcomeDate;
         private Long subTotal;
