@@ -69,13 +69,13 @@
             <tbody>
             <tr th:each="outcome : ${outcomeSummaryByDate}">
                 <td><a th:href="@{'/outcomes/' + ${outcome.outcomeDate}}" th:text="${outcome.outcomeDate}"></a></td>
-                <td><span th:text="${outcome.subTotal}"></span>円</td>
+                <td><span th:text="${#numbers.formatInteger(outcome.subTotal, 3, 'COMMA')}"></span>円</td>
             </tr>
             </tbody>
             <tfoot>
             <tr>
                 <th>計</th>
-                <td><span th:text="${outcomeTotal}"></span>円</td>
+                <td><span th:text="${#numbers.formatInteger(outcomeTotal, 3, 'COMMA')}"></span>円</td>
             </tr>
             </tfoot>
         </table>

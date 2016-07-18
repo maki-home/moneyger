@@ -118,7 +118,7 @@
                     <span th:text="${outcome.categoryName}"></span>
                 </td>
                 <td><span th:text="${outcome.outcomeName}"></span></td>
-                <td><span th:text="${outcome.amount}"></span>円 x <span th:text="${outcome.quantity}"></span>
+                <td><span th:text="${#numbers.formatInteger(outcome.amount, 3, 'COMMA')}"></span>円 x <span th:text="${outcome.quantity}"></span>
                     <i class="uk-icon-credit-card" th:if="${outcome.creditCard}"></i></td>
             </tr>
             <tr>
@@ -140,7 +140,7 @@
                 <td>&nbsp;</td>
                 <td>&nbsp;</td>
                 <th>計</th>
-                <td><span th:text="${total}"></span>円</td>
+                <td><span th:text="${#numbers.formatInteger(total, 3, 'COMMA')}"></span>円</td>
             </tr>
             </tfoot>
         </table>
