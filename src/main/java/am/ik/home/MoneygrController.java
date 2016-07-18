@@ -151,7 +151,7 @@ public class MoneygrController {
 
     @RequestMapping(path = "incomes")
     String showIncomes(Model model) {
-        return showIncomes(model, LocalDate.now(), Optional.empty());
+        return showIncomes(model, LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()), Optional.empty());
     }
 
     @RequestMapping(path = "incomes", params = "fromDate")
@@ -224,11 +224,27 @@ public class MoneygrController {
                 }
         ).getBody();
 
+        // TODO use Report API
+        Resources<Income> incomes = restTemplate.exchange(
+                RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
+                        .pathSegment("incomes", "search", "findByIncomeDate")
+                        .queryParam("fromDate", fromDate)
+                        .queryParam("toDate", to)
+                        .build().toUri()).build(),
+                new ParameterizedTypeReference<Resources<Income>>() {
+                }
+        ).getBody();
+
+
+        long outcomeTotal = summaryByDate.stream().mapToLong(Outcome.SummaryByDate::getSubTotal).sum();
+        long incomeTotal = incomes.getContent().stream().mapToLong(Income::getAmount).sum();
         model.addAttribute("fromDate", fromDate);
         model.addAttribute("toDate", to);
-        model.addAttribute("summaryByDate", summaryByDate);
-        model.addAttribute("summaryByParentCategory", summaryByParentCategory);
-        model.addAttribute("total", summaryByDate.stream().mapToLong(Outcome.SummaryByDate::getSubTotal).sum());
+        model.addAttribute("outcomeSummaryByDate", summaryByDate);
+        model.addAttribute("outcomeSummaryByParentCategory", summaryByParentCategory);
+        model.addAttribute("outcomeTotal", outcomeTotal);
+        model.addAttribute("incomeTotal", incomeTotal);
+        model.addAttribute("inout", incomeTotal - outcomeTotal);
         model.addAttribute("user", user);
         return "report";
     }

@@ -37,7 +37,26 @@
             <input name="toDate" type="date" th:value="${toDate}"/>
             <button class="uk-button">Go</button>
         </form>
-        <h3>支出一覧</h3>
+        <h3>収支報告</h3>
+        <table class="uk-table uk-table-condensed">
+            <tbody>
+            <tr>
+                <th>支出</th>
+                <td><span th:text="${#numbers.formatInteger(outcomeTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            <tr>
+                <th>収入</th>
+                <td><span th:text="${#numbers.formatInteger(incomeTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
+            <tr>
+                <th>収支</th>
+                <td><span th:text="${#numbers.formatInteger(inout, 3, 'COMMA')}"
+                          th:class="${inout >= 0} ? 'uk-text-success' : 'uk-text-danger'"></span>円
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <h3>支出</h3>
         <a th:href="@{/outcomes(fromDate=${fromDate},toDate=${toDate})}">この期間の全支出</a>
 
         <table class="uk-table uk-table-striped uk-table-condensed">
@@ -48,7 +67,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="outcome : ${summaryByDate}">
+            <tr th:each="outcome : ${outcomeSummaryByDate}">
                 <td><a th:href="@{'/outcomes/' + ${outcome.outcomeDate}}" th:text="${outcome.outcomeDate}"></a></td>
                 <td><span th:text="${outcome.subTotal}"></span>円</td>
             </tr>
@@ -56,7 +75,7 @@
             <tfoot>
             <tr>
                 <th>計</th>
-                <td><span th:text="${total}"></span>円</td>
+                <td><span th:text="${outcomeTotal}"></span>円</td>
             </tr>
             </tfoot>
         </table>
@@ -69,17 +88,17 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="outcome : ${summaryByParentCategory}">
+            <tr th:each="outcome : ${outcomeSummaryByParentCategory}">
                 <td>
                     <a th:href="@{'/outcomes'(fromDate=${fromDate},toDate=${toDate},parentCategoryId=${outcome.parentCategoryId})}"
                        th:text="${outcome.parentCategoryName}"></a></td>
-                <td><span th:text="${outcome.subTotal}"></span>円</td>
+                <td><span th:text="${#numbers.formatInteger(outcome.subTotal, 3, 'COMMA')}"></span>円</td>
             </tr>
             </tbody>
             <tfoot>
             <tr>
                 <th>計</th>
-                <td><span th:text="${total}"></span>円</td>
+                <td><span th:text="${#numbers.formatInteger(outcomeTotal, 3, 'COMMA')}"></span>円</td>
             </tr>
             </tfoot>
         </table>
@@ -96,7 +115,7 @@
             <tfoot>
             <tr>
                 <th>計</th>
-                <td><span></span>円</td>
+                <td><span th:text="${#numbers.formatInteger(incomeTotal, 3, 'COMMA')}"></span>円</td>
             </tr>
             </tfoot>
         </table>
