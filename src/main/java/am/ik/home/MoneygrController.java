@@ -59,7 +59,6 @@ public class MoneygrController {
                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
         LocalDate to = toDate.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
         Resources<Outcome> outcomes = outcomeClient.findByOutcomeDate(fromDate, to);
-        System.out.println(outcomes);
         Map<String, String> memberMap = cache.getMembers();
         outcomes.forEach(o -> o.setMemberMap(memberMap));
         model.addAttribute("fromDate", fromDate);
