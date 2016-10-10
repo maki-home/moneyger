@@ -12,6 +12,28 @@ class OutcomeClient {
         });
     }
 
+    reportByDate(fromDate, toDate) {
+        return axios.get('/api/outcomes/reportByDate', {
+            params: {
+                fromDate: fromDate.format('YYYY-MM-DD'),
+                toDate: toDate.format('YYYY-MM-DD')
+            }
+        }).then(x => {
+            return x.data;
+        });
+    }
+
+    reportByParentCategory(fromDate, toDate) {
+        return axios.get('/api/outcomes/reportByParentCategory', {
+            params: {
+                fromDate: fromDate.format('YYYY-MM-DD'),
+                toDate: toDate.format('YYYY-MM-DD')
+            }
+        }).then(x => {
+            return x.data;
+        });
+    }
+
     fetchOutcomeCategories() {
         return axios.get('/api/outcomeCategories')
             .then(x => {

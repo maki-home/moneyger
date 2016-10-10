@@ -85,8 +85,9 @@ class MainTabs extends Component {
                             <span>So much content.</span>
                         </Tab>
                         <Tab eventKey={3} onEntered={this.onEntered} title="今月のレポート">
-                            <Report fromDate={moment(this.props.location.query.fromDate)}
-                                    toDate={moment(this.props.location.query.toDate)}/>
+                            <Report
+                                fromDate={this.props.location.query.fromDate && moment(this.props.location.query.fromDate)}
+                                toDate={this.props.location.query.toDate && moment(this.props.location.query.toDate)}/>
                         </Tab>
                     </Tabs>
                 </Panel>
