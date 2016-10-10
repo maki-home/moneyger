@@ -68,8 +68,9 @@ class OutcomeForm extends Component {
                             onChange={this.handleChange}>
                         <option value="">カテゴリ</option>
                         {this.state.outcomeCategories.map(c => (
-                            <option label={`${c.parentOutcomeCategory.parentCategoryName} (${c.categoryName})`}
-                                    value={c.categoryId} key={c.categoryId}/>))}
+                            <option value={c.categoryId} key={c.categoryId}>
+                                ${c.parentOutcomeCategory.parentCategoryName} (${c.categoryName})
+                            </option>))}
                     </select>
                     {this.state.validationState.categoryId === 'error' &&
                     <div className="error-text help-block">{this.state.errorMessage.categoryId}</div>}
@@ -82,7 +83,7 @@ class OutcomeForm extends Component {
                             onChange={this.handleChange}>
                         <option value="">支出者</option>
                         {this.state.members.map(m => (
-                            <option label={`${m.familyName} ${m.givenName}`} value={m.memberId} key={m.memberId}/>))}
+                            <option value={m.memberId} key={m.memberId}>{m.familyName} {m.givenName}</option>))}
                     </select>
                     {this.state.validationState.outcomeBy === 'error' &&
                     <div className="error-text help-block">{this.state.errorMessage.outcomeBy}</div>}
