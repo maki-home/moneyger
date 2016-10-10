@@ -2,6 +2,9 @@ import React, {Component} from "react";
 import {Link} from "react-router";
 import {Table, TableCell} from "pui-react-table";
 import {BasicPanelAlt} from "pui-react-panels";
+import {Row, Col} from "pui-react-grids";
+import {DefaultButton} from "pui-react-buttons";
+import {Icon} from "pui-react-iconography";
 import outcomeClient from "../outcomes/OutcomeClient";
 import format from "number-format.js";
 import moment from "moment";
@@ -65,11 +68,34 @@ class Report extends Component {
     }
 
     render() {
+        const prevMonth = this.state.fromDate.clone().subtract(1, 'month'),
+            nextMonth = this.state.fromDate.clone().add(1, 'month');
         return (
             <div>
                 <h2>
                     {this.state.fromDate.format('YYYY-MM-DD')} ~ {this.state.toDate.format('YYYY-MM-DD')}のレポート
                 </h2>
+                <Row>
+                    <Col xs={4}><DefaultButton>
+                        <Link to={{
+                            pathname: '/report', query: {
+                                fromDate: prevMonth.format('YYYY-MM')
+                            }
+                        }}>
+                            <Icon name="angle-double-left"/>&nbsp;{prevMonth.format('YYYY-MM')}
+                        </Link>
+                    </DefaultButton></Col>
+                    <Col xs={16}/>
+                    <Col xs={4}><DefaultButton>
+                        <Link to={{
+                            pathname: '/report', query: {
+                                fromDate: nextMonth.format('YYYY-MM')
+                            }
+                        }}>
+                            {nextMonth.format('YYYY-MM')}&nbsp;<Icon name="angle-double-right"/>
+                        </Link>
+                    </DefaultButton></Col>
+                </Row>
                 <BasicPanelAlt header="収支報告">
                 </BasicPanelAlt>
                 <BasicPanelAlt header="支出">
