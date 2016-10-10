@@ -265,25 +265,20 @@ class OutcomeForm extends Component {
     }
 
     componentDidMount() {
-        // TODO Promise.all
-        this.props.fetchUserinfo
-            .then(userinfo => {
-                this.setState({
-                    outcomeBy: userinfo.id
-                });
+        Promise.all([
+            this.props.fetchUserinfo,
+            this.props.fetchMembers,
+            this.props.fetchOutcomeCategories
+        ]).then(ret => {
+            const userinfo = ret[0],
+                members = ret[1],
+                outcomeCategories = ret[2];
+            this.setState({
+                outcomeBy: userinfo.id,
+                members: members,
+                outcomeCategories: outcomeCategories
             });
-        this.props.fetchMembers
-            .then(members => {
-                this.setState({
-                    members: members
-                });
-            });
-        this.props.fetchOutcomeCategories
-            .then(outcomeCategories => {
-                this.setState({
-                    outcomeCategories: outcomeCategories
-                });
-            });
+        });
     }
 
     componentWillReceiveProps(props) {
