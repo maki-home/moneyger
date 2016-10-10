@@ -69,7 +69,7 @@ class OutcomeForm extends Component {
                         <option value="">カテゴリ</option>
                         {this.state.outcomeCategories.map(c => (
                             <option value={c.categoryId} key={c.categoryId}>
-                                ${c.parentOutcomeCategory.parentCategoryName} (${c.categoryName})
+                                {c.parentOutcomeCategory.parentCategoryName} ({c.categoryName})
                             </option>))}
                     </select>
                     {this.state.validationState.categoryId === 'error' &&
