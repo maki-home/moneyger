@@ -1,7 +1,5 @@
 package am.ik.home;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import feign.RequestInterceptor;
 import org.apache.catalina.filters.RequestDumperFilter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.SpringApplication;
@@ -21,6 +19,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import feign.RequestInterceptor;
 
 
 @SpringBootApplication
@@ -28,12 +31,12 @@ import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResour
 @EnableZuulProxy
 @EnableFeignClients
 public class MoneygrApplication extends WebSecurityConfigurerAdapter {
-    @Override
-    public void configure(HttpSecurity http) throws Exception {
-        http.antMatcher("/**").authorizeRequests()
-                .antMatchers("/").permitAll()
-                .anyRequest().authenticated();
-    }
+	@Override
+	public void configure(HttpSecurity http) throws Exception {
+		http.antMatcher("/**").authorizeRequests().antMatchers("/").permitAll()
+				.anyRequest().authenticated().and().csrf()
+				.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+	}
 
     @Profile("!cloud")
     @Bean

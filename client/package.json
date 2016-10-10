@@ -1,0 +1,32 @@
+{
+  "name": "moneygr-ui",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "react-scripts": "0.6.1"
+  },
+  "dependencies": {
+    "axios": "^0.14.0",
+    "moment": "^2.15.1",
+    "number-format.js": "^1.1.10",
+    "pui-css-button-group": "^6.0.2",
+    "pui-react-buttons": "^6.0.2",
+    "pui-react-checkbox": "^6.0.2",
+    "pui-react-dividers": "^6.0.2",
+    "pui-react-grids": "^6.0.2",
+    "pui-react-iconography": "^6.0.2",
+    "pui-react-inputs": "^6.0.2",
+    "pui-react-panels": "^6.0.2",
+    "pui-react-table": "^6.0.2",
+    "pui-react-tabs": "^6.0.2",
+    "react": "^15.3.2",
+    "react-dom": "^15.3.2",
+    "react-router": "^2.8.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
