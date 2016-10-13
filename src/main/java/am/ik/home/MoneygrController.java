@@ -42,19 +42,19 @@ public class MoneygrController {
         return "index";
     }
 
-    @RequestMapping(path = "outcomes")
+    //@RequestMapping(path = "outcomes")
     String showOutcomes(Model model) {
         LocalDate now = LocalDate.now();
         model.addAttribute("outcomeDate", now);
         return showOutcomes(model, now);
     }
 
-    @RequestMapping(path = "outcomes/{outcomeDate}")
+    //@RequestMapping(path = "outcomes/{outcomeDate}")
     String showOutcomes(Model model, @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @PathVariable LocalDate outcomeDate) {
         return showOutcomes(model, outcomeDate, Optional.of(outcomeDate));
     }
 
-    @RequestMapping(path = "outcomes", params = "fromDate")
+    //@RequestMapping(path = "outcomes", params = "fromDate")
     String showOutcomes(Model model, @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam LocalDate fromDate,
                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
         LocalDate to = toDate.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
@@ -71,7 +71,7 @@ public class MoneygrController {
         return "outcomes";
     }
 
-    @RequestMapping(path = "outcomes", params = "keyword")
+    //@RequestMapping(path = "outcomes", params = "keyword")
     String searchOutcomes(Model model, @RequestParam String keyword) throws IOException {
         Resources<Outcome> outcomes = outcomeClient.findByOutcomeNameContaining(UriUtils.encodeQueryParam(keyword, "UTF-8"));
         Map<String, String> memberMap = cache.getMembers();
@@ -84,7 +84,7 @@ public class MoneygrController {
         return "outcomes";
     }
 
-    @RequestMapping(path = "outcomes", params = {"parentCategoryId", "fromDate"})
+    //@RequestMapping(path = "outcomes", params = {"parentCategoryId", "fromDate"})
     String showOutcomesByParentCategoryId(Model model,
                                           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam LocalDate fromDate,
                                           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate,
@@ -108,7 +108,7 @@ public class MoneygrController {
         return "outcomes";
     }
 
-    @RequestMapping(path = "outcomes", method = RequestMethod.POST)
+    //@RequestMapping(path = "outcomes", method = RequestMethod.POST)
     String registerOutcome(@Validated Outcome outcome, BindingResult result, Model model, HttpServletResponse response) {
         if (result.hasErrors()) {
             return outcome.getOutcomeDate() == null ? showOutcomes(model) : showOutcomes(model, outcome.getOutcomeDate());
@@ -119,12 +119,12 @@ public class MoneygrController {
         return "redirect:/outcomes/" + outcome.getOutcomeDate();
     }
 
-    @RequestMapping(path = "incomes")
+    //@RequestMapping(path = "incomes")
     String showIncomes(Model model) {
         return showIncomes(model, LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()), Optional.empty());
     }
 
-    @RequestMapping(path = "incomes", params = "fromDate")
+    //@RequestMapping(path = "incomes", params = "fromDate")
     String showIncomes(Model model, @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam LocalDate fromDate,
                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
         LocalDate to = toDate.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
@@ -143,7 +143,7 @@ public class MoneygrController {
     }
 
 
-    @RequestMapping(path = "incomes", method = RequestMethod.POST)
+    //@RequestMapping(path = "incomes", method = RequestMethod.POST)
     String registerIncome(@Validated Income income, BindingResult result, Model model, RedirectAttributes attributes) {
         if (result.hasErrors()) {
             return income.getIncomeDate() == null ? showIncomes(model) : showIncomes(model, income.getIncomeDate(), Optional.empty());
@@ -154,12 +154,12 @@ public class MoneygrController {
         return "redirect:/incomes";
     }
 
-    @RequestMapping(path = "/report")
+    //@RequestMapping(path = "/report")
     String report(Model model) {
         return report(model, LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()), Optional.empty());
     }
 
-    @RequestMapping(path = "/report", params = "fromDate")
+    //@RequestMapping(path = "/report", params = "fromDate")
     String report(Model model,
                   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam LocalDate fromDate,
                   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {

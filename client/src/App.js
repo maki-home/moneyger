@@ -17,6 +17,7 @@ const NotFound = () => (
 const App = () => (
     <Router history={browserHistory}>
         <Route path="/" component={MainTabs}/>
+        <Route path="/index.html" component={MainTabs}/>
         <Route path="/outcomes(/:outcomeDate)" component={MainTabs}/>
         <Route path="/incomes" component={MainTabs}/>
         <Route path="/report" component={MainTabs}/>
