@@ -40,13 +40,13 @@
             <select class="uk-form-select" name="incomeCategory.categoryId">
                 <option value="">カテゴリ</option>
                 <option th:each="value : ${categories}"
-                        th:label="${value.value}"
+                        th:text="${value.value}"
                         th:value="${value.key}"></option>
             </select><br/>
             <select class="uk-form-select" name="incomeBy">
                 <option value="">収入者</option>
                 <option th:each="member : ${members}"
-                        th:label="${member.value }"
+                        th:text="${member.value }"
                         th:value="${member.key}"
                         th:selected="${member.key == user.userId}"></option>
             </select><br/>

@@ -53,14 +53,14 @@
                 <option value="">カテゴリ</option>
                 <!--/*/ <th:block th:each="categoryGroup : ${categories}" th:label="${categoryGroup.key}"> /*/-->
                 <option th:each="value : ${categoryGroup.value}"
-                        th:label="${categoryGroup.key + '('+ value.value + ')'}"
+                        th:text="${categoryGroup.key + '('+ value.value + ')'}"
                         th:value="${value.key}"></option>
                 <!--/*/ </th:block> /*/-->
             </select><br/>
             <select class="uk-form-select" name="outcomeBy">
                 <option value="">支出者</option>
                 <option th:each="member : ${members}"
-                        th:label="${member.value }"
+                        th:text="${member.value }"
                         th:value="${member.key}"
                         th:selected="${member.key == user.userId}"></option>
             </select><br/>
