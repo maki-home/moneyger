@@ -13,7 +13,4 @@ public interface IncomeClient {
     @RequestMapping(method = RequestMethod.GET, path = "search/findByIncomeDate")
     Resources<Income> findByIncomeDate(@RequestParam(name = "fromDate") LocalDate fromDate,
                                        @RequestParam(name = "toDate") LocalDate toDate);
-
-    @RequestMapping(method = RequestMethod.POST)
-    Income postIncome(Income income);
 }

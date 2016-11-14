@@ -6,6 +6,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Resources;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +29,10 @@ public class MoneygrController {
     OutcomeClient outcomeClient;
     @Autowired
     IncomeClient incomeClient;
+    @Autowired
+    OutcomeSender outcomeSender;
+    @Autowired
+    IncomeSender incomeSender;
     @Autowired
     MoneygrUser user;
     @Autowired
@@ -113,7 +118,10 @@ public class MoneygrController {
         if (result.hasErrors()) {
             return outcome.getOutcomeDate() == null ? showOutcomes(model) : showOutcomes(model, outcome.getOutcomeDate());
         }
-        outcomeClient.postOutcome(outcome);
+        if (StringUtils.isEmpty(outcome.getOutcomeBy())) {
+            outcome.setOutcomeBy(user.getUserId());
+        }
+        outcomeSender.send(outcome);
         Cookie cookie = new Cookie("creditCard", String.valueOf(outcome.isCreditCard()));
         response.addCookie(cookie);
         return "redirect:/outcomes/" + outcome.getOutcomeDate();
@@ -148,7 +156,10 @@ public class MoneygrController {
         if (result.hasErrors()) {
             return income.getIncomeDate() == null ? showIncomes(model) : showIncomes(model, income.getIncomeDate(), Optional.empty());
         }
-        incomeClient.postIncome(income);
+        if (StringUtils.isEmpty(income.getIncomeBy())) {
+            income.setIncomeBy(user.getUserId());
+        }
+        incomeSender.send(income);
         LocalDate date = income.getIncomeDate().with(TemporalAdjusters.firstDayOfMonth());
         attributes.addAttribute("fromDate", date.format(DateTimeFormatter.ISO_LOCAL_DATE));
         return "redirect:/incomes";

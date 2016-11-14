@@ -30,7 +30,4 @@ public interface OutcomeClient {
     @RequestMapping(method = RequestMethod.GET, path = "reportByParentCategory")
     List<Outcome.SummaryByParentCategory> reportByParentCategory(@RequestParam(name = "fromDate") LocalDate fromDate,
                                                                  @RequestParam(name = "toDate") LocalDate toDate);
-
-    @RequestMapping(method = RequestMethod.POST)
-    Outcome postOutcome(Outcome outcome);
 }
