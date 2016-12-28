@@ -1,7 +1,5 @@
 package am.ik.home;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import feign.RequestInterceptor;
 import org.apache.catalina.filters.RequestDumperFilter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.SpringApplication;
@@ -24,6 +22,12 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
+import org.springframework.web.context.annotation.SessionScope;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import am.ik.home.client.user.UaaUser;
+import feign.RequestInterceptor;
 
 
 @SpringBootApplication
@@ -45,6 +49,12 @@ public class MoneygrApplication extends WebSecurityConfigurerAdapter {
     RequestDumperFilter requestDumperFilter() {
         return new RequestDumperFilter();
     }
+
+	@Bean
+	@SessionScope
+	UaaUser uaaUser(ObjectMapper objectMapper) {
+		return new UaaUser(objectMapper);
+	}
 
     @Bean
     InitializingBean messageConvertersInitializer(HttpMessageConverters messageConverters) {

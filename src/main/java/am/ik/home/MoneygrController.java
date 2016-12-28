@@ -1,5 +1,6 @@
 package am.ik.home;
 
+import am.ik.home.client.user.UaaUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -34,7 +35,7 @@ public class MoneygrController {
     @Autowired
     IncomeSender incomeSender;
     @Autowired
-    MoneygrUser user;
+    UaaUser user;
     @Autowired
     SessionCache cache;
     @Value("${inout.uri}")
