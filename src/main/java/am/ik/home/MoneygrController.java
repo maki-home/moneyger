@@ -40,8 +40,6 @@ public class MoneygrController {
     SessionCache cache;
     @Value("${inout.uri}")
     URI inoutUri;
-    @Value("${member.uri}")
-    URI memberUri;
 
     @RequestMapping("/")
     String index() {

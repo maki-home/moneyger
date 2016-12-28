@@ -2,6 +2,7 @@ package am.ik.home;
 
 import org.apache.catalina.filters.RequestDumperFilter;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.oauth2.client.EnableOAuth2Sso;
@@ -26,6 +27,8 @@ import org.springframework.web.context.annotation.SessionScope;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import am.ik.home.client.member.MemberClient;
+import am.ik.home.client.member.MemberClientImpl;
 import am.ik.home.client.user.UaaUser;
 import feign.RequestInterceptor;
 
@@ -54,6 +57,12 @@ public class MoneygrApplication extends WebSecurityConfigurerAdapter {
 	@SessionScope
 	UaaUser uaaUser(ObjectMapper objectMapper) {
 		return new UaaUser(objectMapper);
+	}
+
+	@Bean
+	MemberClient memberClient(@Value("${auth-server}") String apiBase,
+			OAuth2RestTemplate oAuth2RestTemplate) {
+		return new MemberClientImpl(apiBase, oAuth2RestTemplate);
 	}
 
     @Bean

@@ -1,6 +1,13 @@
 package am.ik.home;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import static java.util.stream.Collectors.toMap;
+
+import java.net.URI;
+import java.util.*;
+import java.util.stream.StreamSupport;
+
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
@@ -10,12 +17,10 @@ import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.annotation.PostConstruct;
-import java.net.URI;
-import java.util.*;
-import java.util.stream.StreamSupport;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import static java.util.stream.Collectors.toMap;
+import am.ik.home.client.member.Member;
+import am.ik.home.client.member.MemberClient;
 
 @Component
 @Scope(value = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
@@ -27,10 +32,10 @@ public class SessionCache {
 
     @Autowired
     OAuth2RestTemplate restTemplate;
+    @Autowired
+    MemberClient memberClient;
     @Value("${inout.uri}")
     URI inoutUri;
-    @Value("${member.uri}")
-    URI memberUri;
 
     @PostConstruct
     public void init() {
@@ -80,19 +85,8 @@ public class SessionCache {
         return cat;
     }
 
-    private Map<String, String> members() {
-        JsonNode members = restTemplate.exchange(
-                RequestEntity.get(UriComponentsBuilder.fromUri(memberUri)
-                        .pathSegment("members")
-                        .build().toUri()).build(),
-                JsonNode.class)
-                .getBody();
-        Map<String, String> memberMap = StreamSupport.stream(
-                Spliterators.spliteratorUnknownSize(members.get("_embedded").get("members").elements(), Spliterator.ORDERED), false)
-                .collect(toMap(
-                        node -> node.get("memberId").asText(),
-                        node -> node.get("familyName").asText() + " " + node.get("givenName").asText()
-                ));
-        return memberMap;
-    }
+	private Map<String, String> members() {
+		return memberClient.findAll().getContent().stream().collect(toMap(
+				Member::getMemberId, m -> m.getFamilyName() + " " + m.getGivenName()));
+	}
 }
