@@ -32,7 +32,6 @@ import am.ik.home.client.member.MemberClientImpl;
 import am.ik.home.client.user.UaaUser;
 import feign.RequestInterceptor;
 
-
 @SpringBootApplication
 @EnableOAuth2Sso
 @EnableZuulProxy
@@ -40,18 +39,21 @@ import feign.RequestInterceptor;
 @EnableBinding(MoneygrSource.class)
 @IntegrationComponentScan
 public class MoneygrApplication extends WebSecurityConfigurerAdapter {
-    @Override
-    public void configure(HttpSecurity http) throws Exception {
-        http.antMatcher("/**").authorizeRequests()
-                .antMatchers("/").permitAll()
-                .anyRequest().authenticated();
-    }
+	public static void main(String[] args) {
+		SpringApplication.run(MoneygrApplication.class, args);
+	}
 
-    @Profile("!cloud")
-    @Bean
-    RequestDumperFilter requestDumperFilter() {
-        return new RequestDumperFilter();
-    }
+	@Override
+	public void configure(HttpSecurity http) throws Exception {
+		http.antMatcher("/**").authorizeRequests().antMatchers("/").permitAll()
+				.anyRequest().authenticated();
+	}
+
+	@Profile("!cloud")
+	@Bean
+	RequestDumperFilter requestDumperFilter() {
+		return new RequestDumperFilter();
+	}
 
 	@Bean
 	@SessionScope
@@ -65,38 +67,37 @@ public class MoneygrApplication extends WebSecurityConfigurerAdapter {
 		return new MemberClientImpl(apiBase, oAuth2RestTemplate);
 	}
 
-    @Bean
-    InitializingBean messageConvertersInitializer(HttpMessageConverters messageConverters) {
-        return () -> messageConverters.getConverters().stream()
-                .filter(c -> c instanceof MappingJackson2HttpMessageConverter)
-                .findAny()
-                .ifPresent(c -> {
-                    MappingJackson2HttpMessageConverter converter = (MappingJackson2HttpMessageConverter) c;
-                    ObjectMapper objectMapper = converter.getObjectMapper();
-                    objectMapper.registerModule(new Jackson2HalModule());
-                });
-    }
+	@Bean
+	InitializingBean messageConvertersInitializer(
+			HttpMessageConverters messageConverters) {
+		return () -> messageConverters.getConverters().stream()
+				.filter(c -> c instanceof MappingJackson2HttpMessageConverter).findAny()
+				.ifPresent(c -> {
+					MappingJackson2HttpMessageConverter converter = (MappingJackson2HttpMessageConverter) c;
+					ObjectMapper objectMapper = converter.getObjectMapper();
+					objectMapper.registerModule(new Jackson2HalModule());
+				});
+	}
 
-    @Bean
-    RequestInterceptor oauth2FeignRequestInterceptor(OAuth2ClientContext oauth2ClientContext, OAuth2ProtectedResourceDetails resource) {
-        return new OAuth2FeignRequestInterceptor(oauth2ClientContext, resource);
-    }
+	@Bean
+	RequestInterceptor oauth2FeignRequestInterceptor(
+			OAuth2ClientContext oauth2ClientContext,
+			OAuth2ProtectedResourceDetails resource) {
+		return new OAuth2FeignRequestInterceptor(oauth2ClientContext, resource);
+	}
 
-    @Bean
-    OAuth2RestTemplate oAuth2RestTemplate(OAuth2ProtectedResourceDetails resource, OAuth2ClientContext context) {
-        return new OAuth2RestTemplate(resource, context);
-    }
+	@Bean
+	OAuth2RestTemplate oAuth2RestTemplate(OAuth2ProtectedResourceDetails resource,
+			OAuth2ClientContext context) {
+		return new OAuth2RestTemplate(resource, context);
+	}
 
-    @Bean
-    FeignFormatterRegistrar localDateFeignFormatterRegistrar() {
-        return formatterRegistry -> {
-            DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
-            registrar.setUseIsoFormat(true);
-            registrar.registerFormatters(formatterRegistry);
-        };
-    }
-
-    public static void main(String[] args) {
-        SpringApplication.run(MoneygrApplication.class, args);
-    }
+	@Bean
+	FeignFormatterRegistrar localDateFeignFormatterRegistrar() {
+		return formatterRegistry -> {
+			DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
+			registrar.setUseIsoFormat(true);
+			registrar.registerFormatters(formatterRegistry);
+		};
+	}
 }
