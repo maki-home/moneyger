@@ -88,8 +88,10 @@ public class MoneygrApplication extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	OAuth2RestTemplate oAuth2RestTemplate(OAuth2ProtectedResourceDetails resource,
-			OAuth2ClientContext context) {
-		return new OAuth2RestTemplate(resource, context);
+			OAuth2ClientContext context, HttpMessageConverters messageConverters) {
+		OAuth2RestTemplate restTemplate = new OAuth2RestTemplate(resource, context);
+		restTemplate.setMessageConverters(messageConverters.getConverters());
+		return restTemplate;
 	}
 
 	@Bean
