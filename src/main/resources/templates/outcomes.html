@@ -173,7 +173,7 @@
 
         function deleteOutcome(button) {
             if (confirm("本当に削除しますか?")) {
-                request.del('/api/outcomes/' + button.parentNode.dataset.id)
+                request.del('/v1/outcomes/' + button.parentNode.dataset.id)
                     .set('X-CSRF-TOKEN', document.forms[0]._csrf.value)
                     .end(function (err, res) {
                         if (res.status == 204) {
@@ -185,12 +185,12 @@
         }
 
         function loadFromServer(button) {
-            request.get('/api/outcomes/' + button.parentNode.dataset.id)
+            request.get('/v1/outcomes/' + button.parentNode.dataset.id)
                 .end(function (err, res) {
                     if (res.status == 200) {
                         var f = document.querySelector("#outcomeForm");
                         var outcome = JSON.parse(res.text);
-                        request.get(outcome._links.outcomeCategory.href.replace('api/outcomes/', '' /* remoce dup */))
+                        request.get(outcome._links.outcomeCategory.href.replace('v1/outcomes/', '' /* remoce dup */))
                             .end(function (err, res) {
                                 var category = JSON.parse(res.text);
                                 f.querySelector("select").value = category.categoryId;
