@@ -1,10 +1,10 @@
 package am.ik.home;
 
 import org.apache.catalina.filters.RequestDumperFilter;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.boot.autoconfigure.security.oauth2.client.EnableOAuth2Sso;
 import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
 import org.springframework.cloud.netflix.feign.EnableFeignClients;
@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
 import org.springframework.hateoas.hal.Jackson2HalModule;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.integration.annotation.IntegrationComponentScan;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -68,15 +67,8 @@ public class MoneygrApplication extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	InitializingBean messageConvertersInitializer(
-			HttpMessageConverters messageConverters) {
-		return () -> messageConverters.getConverters().stream()
-				.filter(c -> c instanceof MappingJackson2HttpMessageConverter).findAny()
-				.ifPresent(c -> {
-					MappingJackson2HttpMessageConverter converter = (MappingJackson2HttpMessageConverter) c;
-					ObjectMapper objectMapper = converter.getObjectMapper();
-					objectMapper.registerModule(new Jackson2HalModule());
-				});
+	Jackson2ObjectMapperBuilderCustomizer jackson2ObjectMapperBuilderCustomizer() {
+		return builder -> builder.modulesToInstall(new Jackson2HalModule());
 	}
 
 	@Bean
