@@ -1,38 +1,22 @@
 package am.ik.home;
 
 import java.time.LocalDate;
-import java.util.List;
 
-import org.springframework.cloud.netflix.feign.FeignClient;
 import org.springframework.hateoas.Resources;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "outcomes", url = "${inout.uri}", path = "outcomes")
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 public interface OutcomeClient {
-	@RequestMapping(method = RequestMethod.GET, path = "search/findByOutcomeDate")
-	Resources<Outcome> findByOutcomeDate(
-			@RequestParam(name = "fromDate") LocalDate fromDate,
-			@RequestParam(name = "toDate") LocalDate toDate);
+	Mono<Resources<Outcome>> findByOutcomeDate(LocalDate fromDate, LocalDate toDate);
 
-	@RequestMapping(method = RequestMethod.GET, path = "search/findByOutcomeNameContaining")
-	Resources<Outcome> findByOutcomeNameContaining(
-			@RequestParam(name = "outcomeName") String outcomeName);
+	Mono<Resources<Outcome>> findByOutcomeNameContaining(String outcomeName);
 
-	@RequestMapping(method = RequestMethod.GET, path = "search/findByParentCategoryId")
-	Resources<Outcome> findByParentCategoryId(
-			@RequestParam(name = "parentCategoryId") Integer parentCategoryId,
-			@RequestParam(name = "fromDate") LocalDate fromDate,
-			@RequestParam(name = "toDate") LocalDate toDate);
+	Mono<Resources<Outcome>> findByParentCategoryId(Integer parentCategoryId,
+			LocalDate fromDate, LocalDate toDate);
 
-	@RequestMapping(method = RequestMethod.GET, path = "reportByDate")
-	List<Outcome.SummaryByDate> reportByDate(
-			@RequestParam(name = "fromDate") LocalDate fromDate,
-			@RequestParam(name = "toDate") LocalDate toDate);
+	Flux<Outcome.SummaryByDate> reportByDate(LocalDate fromDate, LocalDate toDate);
 
-	@RequestMapping(method = RequestMethod.GET, path = "reportByParentCategory")
-	List<Outcome.SummaryByParentCategory> reportByParentCategory(
-			@RequestParam(name = "fromDate") LocalDate fromDate,
-			@RequestParam(name = "toDate") LocalDate toDate);
+	Flux<Outcome.SummaryByParentCategory> reportByParentCategory(LocalDate fromDate,
+			LocalDate toDate);
 }

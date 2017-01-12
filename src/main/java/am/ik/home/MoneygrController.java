@@ -70,7 +70,8 @@ public class MoneygrController {
 			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
 		LocalDate to = toDate
 				.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
-		Resources<Outcome> outcomes = outcomeClient.findByOutcomeDate(fromDate, to);
+		Resources<Outcome> outcomes = outcomeClient.findByOutcomeDate(fromDate, to)
+				.block();
 		Map<String, String> memberMap = cache.getMembers();
 		outcomes.forEach(o -> o.setMemberMap(memberMap));
 		model.addAttribute("fromDate", fromDate);
@@ -87,7 +88,8 @@ public class MoneygrController {
 	@RequestMapping(path = "outcomes", params = "keyword")
 	String searchOutcomes(Model model, @RequestParam String keyword) throws IOException {
 		Resources<Outcome> outcomes = outcomeClient
-				.findByOutcomeNameContaining(UriUtils.encodeQueryParam(keyword, "UTF-8"));
+				.findByOutcomeNameContaining(UriUtils.encodeQueryParam(keyword, "UTF-8"))
+				.block();
 		Map<String, String> memberMap = cache.getMembers();
 		outcomes.forEach(o -> o.setMemberMap(memberMap));
 		model.addAttribute("outcomes", outcomes);
@@ -108,7 +110,7 @@ public class MoneygrController {
 				.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
 
 		Resources<Outcome> outcomes = outcomeClient
-				.findByParentCategoryId(parentCategoryId, fromDate, to);
+				.findByParentCategoryId(parentCategoryId, fromDate, to).block();
 
 		Map<String, String> memberMap = cache.getMembers();
 		outcomes.forEach(o -> o.setMemberMap(memberMap));
@@ -157,7 +159,7 @@ public class MoneygrController {
 		LocalDate to = toDate
 				.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
 
-		Resources<Income> incomes = incomeClient.findByIncomeDate(fromDate, to);
+		Resources<Income> incomes = incomeClient.findByIncomeDate(fromDate, to).block();
 		Map<String, String> memberMap = cache.getMembers();
 		incomes.forEach(o -> o.setMemberMap(memberMap));
 		model.addAttribute("fromDate", fromDate);
@@ -200,12 +202,14 @@ public class MoneygrController {
 			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
 		LocalDate to = toDate
 				.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
-		List<Outcome.SummaryByDate> summaryByDate = outcomeClient.reportByDate(fromDate,
-				to);
+		// TODO non-blocking
+		List<Outcome.SummaryByDate> summaryByDate = outcomeClient
+				.reportByDate(fromDate, to).toStream().collect(Collectors.toList());
 		List<Outcome.SummaryByParentCategory> summaryByParentCategory = outcomeClient
-				.reportByParentCategory(fromDate, to);
+				.reportByParentCategory(fromDate, to).toStream()
+				.collect(Collectors.toList());
 		// TODO use Report API
-		Resources<Income> incomes = incomeClient.findByIncomeDate(fromDate, to);
+		Resources<Income> incomes = incomeClient.findByIncomeDate(fromDate, to).block();
 
 		long outcomeTotal = summaryByDate.stream()
 				.mapToLong(Outcome.SummaryByDate::getSubTotal).sum();
