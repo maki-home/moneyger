@@ -15,8 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -38,8 +36,6 @@ public class OutcomeWebClient implements OutcomeClient {
 						.pathSegment("outcomes", "search", "findByOutcomeDate")
 						.queryParam("fromDate", fromDate).queryParam("toDate", toDate)
 						.build().encode().toUri()).accept(MediaTypes.HAL_JSON).build();
-		System.out.println(this.webClient.exchange(req)
-				.then(res -> res.bodyToMono(JsonNode.class)).block());
 		return this.webClient.exchange(req).then(res -> res
 				.body(toMono(forClassWithGenerics(Resources.class, Outcome.class))));
 	}
