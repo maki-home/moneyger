@@ -1,0 +1,16 @@
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: java
+    tag: 8-jdk-alpine
+inputs:
+  - name: repo
+  - name: repo-ci
+  - name: m2
+run:
+  path: sh
+  args:
+  - repo-ci/ci/tasks/unit.sh
+params:
+  _JAVA_OPTIONS: -Duser.timezone=Asia/Tokyo -Duser.language=ja -Duser.country=JP -Djava.security.egd=file:/dev/./urandom

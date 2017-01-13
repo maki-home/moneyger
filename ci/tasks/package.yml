@@ -1,0 +1,16 @@
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: java
+    tag: 8-jdk-alpine
+inputs:
+  - name: repo
+  - name: repo-ci
+  - name: m2
+outputs:
+  - name: output
+run:
+  path: sh
+  args:
+  - repo-ci/ci/tasks/package.sh

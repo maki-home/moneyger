@@ -39,23 +39,7 @@ jobs:
           resource: moneygr-ci
         - get: m2
       - task: unit
-        config:
-          platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: java
-              tag: 8-jdk-alpine
-          inputs:
-            - name: repo
-            - name: repo-ci
-            - name: m2
-          run:
-            path: sh
-            args:
-            - repo-ci/ci/tasks/unit.sh
-          params:
-            _JAVA_OPTIONS: -Duser.timezone=Asia/Tokyo -Duser.language=ja -Duser.country=JP -Djava.security.egd=file:/dev/./urandom
+        file: repo-ci/ci/tasks/unit.yml
   - name: moneygr-deploy-dev
     plan:
       - aggregate:
@@ -67,23 +51,7 @@ jobs:
           resource: moneygr-ci
         - get: m2
       - task: package
-        config:
-          platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: java
-              tag: 8-jdk-alpine
-          inputs:
-            - name: repo
-            - name: repo-ci
-            - name: m2
-          outputs:
-            - name: output
-          run:
-            path: sh
-            args:
-            - repo-ci/ci/tasks/package.sh
+        file: repo-ci/ci/tasks/package.yml
       - put: cf
         params:
           manifest: repo/manifest-dev.yml
@@ -98,24 +66,7 @@ jobs:
         - get: repo-ci
           resource: moneygr-ci
         - get: m2
-      - task: unit
-        config:
-          platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: java
-              tag: 8-jdk-alpine
-          inputs:
-            - name: repo
-            - name: repo-ci
-            - name: m2
-          run:
-            path: sh
-            args:
-            - repo-ci/ci/tasks/unit.sh
-          params:
-            _JAVA_OPTIONS: -Duser.timezone=Asia/Tokyo -Duser.language=ja -Duser.country=JP -Djava.security.egd=file:/dev/./urandom
+        file: repo-ci/ci/tasks/unit.yml
   - name: moneygr-deploy
     plan:
       - aggregate:
@@ -127,23 +78,7 @@ jobs:
           resource: moneygr-ci
         - get: m2
       - task: package
-        config:
-          platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              repository: java
-              tag: 8-jdk-alpine
-          inputs:
-            - name: repo
-            - name: repo-ci
-            - name: m2
-          outputs:
-            - name: output
-          run:
-            path: sh
-            args:
-            - repo-ci/ci/tasks/package.sh
+        file: repo-ci/ci/tasks/package.yml
       - put: cf
         params:
           manifest: repo/manifest.yml
