@@ -9,7 +9,7 @@ applications:
     - income-outcome-rabbitmq
     domains:
       - cfapps.pez.pivotal.io
-    host: moneygr
+    host: moneygr-dev
     env:
       JAVA_OPTS: -Duser.timezone=Asia/Tokyo -Duser.language=ja -Duser.country=JP
       auth-server: https://home.cfapps.pez.pivotal.io/uaa
