@@ -5,10 +5,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.Cookie;
@@ -17,7 +14,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.Resources;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -28,6 +24,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriUtils;
 
 import am.ik.home.client.user.UaaUser;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Controller
 public class MoneygrController {
@@ -70,14 +68,17 @@ public class MoneygrController {
 			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
 		LocalDate to = toDate
 				.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
-		Resources<Outcome> outcomes = outcomeClient.findByOutcomeDate(fromDate, to);
 		Map<String, String> memberMap = cache.getMembers();
-		outcomes.forEach(o -> o.setMemberMap(memberMap));
+		Flux<Outcome> outcomes = outcomeClient.findByOutcomeDate(fromDate, to)
+				.flatMap(r -> Flux.fromIterable(r.getContent())).map(x -> {
+					x.setMemberMap(memberMap);
+					return x;
+				});
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", to);
-		model.addAttribute("outcomes", outcomes);
-		model.addAttribute("total", outcomes.getContent().stream()
-				.mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
+		model.addAttribute("outcomes", outcomes.toIterable());
+		model.addAttribute("total",
+				outcomes.toStream().mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
 		model.addAttribute("user", user);
 		model.addAttribute("categories", cache.getOutcomeCategories());
 		model.addAttribute("members", cache.getMembers());
@@ -86,13 +87,16 @@ public class MoneygrController {
 
 	@RequestMapping(path = "outcomes", params = "keyword")
 	String searchOutcomes(Model model, @RequestParam String keyword) throws IOException {
-		Resources<Outcome> outcomes = outcomeClient
-				.findByOutcomeNameContaining(UriUtils.encodeQueryParam(keyword, "UTF-8"));
 		Map<String, String> memberMap = cache.getMembers();
-		outcomes.forEach(o -> o.setMemberMap(memberMap));
-		model.addAttribute("outcomes", outcomes);
-		model.addAttribute("total", outcomes.getContent().stream()
-				.mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
+		Flux<Outcome> outcomes = outcomeClient
+				.findByOutcomeNameContaining(UriUtils.encodeQueryParam(keyword, "UTF-8"))
+				.flatMap(r -> Flux.fromIterable(r.getContent())).map(x -> {
+					x.setMemberMap(memberMap);
+					return x;
+				});
+		model.addAttribute("outcomes", outcomes.toIterable());
+		model.addAttribute("total",
+				outcomes.toStream().mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
 		model.addAttribute("user", user);
 		model.addAttribute("categories", cache.getOutcomeCategories());
 		model.addAttribute("members", cache.getMembers());
@@ -106,18 +110,19 @@ public class MoneygrController {
 			@RequestParam Integer parentCategoryId) {
 		LocalDate to = toDate
 				.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
-
-		Resources<Outcome> outcomes = outcomeClient
-				.findByParentCategoryId(parentCategoryId, fromDate, to);
-
 		Map<String, String> memberMap = cache.getMembers();
-		outcomes.forEach(o -> o.setMemberMap(memberMap));
+		Flux<Outcome> outcomes = outcomeClient
+				.findByParentCategoryId(parentCategoryId, fromDate, to)
+				.flatMap(r -> Flux.fromIterable(r.getContent())).map(x -> {
+					x.setMemberMap(memberMap);
+					return x;
+				});
 
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", to);
-		model.addAttribute("outcomes", outcomes);
-		model.addAttribute("total", outcomes.getContent().stream()
-				.mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
+		model.addAttribute("outcomes", outcomes.toIterable());
+		model.addAttribute("total",
+				outcomes.toStream().mapToInt(o -> o.getAmount() * o.getQuantity()).sum());
 		model.addAttribute("user", user);
 		Map<String, Map<Integer, String>> categories = cache.getOutcomeCategories();
 		model.addAttribute("categories", categories);
@@ -157,14 +162,16 @@ public class MoneygrController {
 		LocalDate to = toDate
 				.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
 
-		Resources<Income> incomes = incomeClient.findByIncomeDate(fromDate, to);
 		Map<String, String> memberMap = cache.getMembers();
-		incomes.forEach(o -> o.setMemberMap(memberMap));
+		Flux<Income> incomes = incomeClient.findByIncomeDate(fromDate, to)
+				.flatMap(r -> Flux.fromIterable(r.getContent())).map(x -> {
+					x.setMemberMap(memberMap);
+					return x;
+				});
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", to);
-		model.addAttribute("incomes", incomes);
-		model.addAttribute("total",
-				incomes.getContent().stream().mapToInt(Income::getAmount).sum());
+		model.addAttribute("incomes", incomes.toIterable());
+		model.addAttribute("total", incomes.toStream().mapToInt(Income::getAmount).sum());
 		model.addAttribute("user", user);
 		model.addAttribute("categories", cache.getIncomeCategories());
 		model.addAttribute("members", cache.getMembers());
@@ -200,34 +207,39 @@ public class MoneygrController {
 			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
 		LocalDate to = toDate
 				.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
-		List<Outcome.SummaryByDate> summaryByDate = outcomeClient.reportByDate(fromDate,
+		Flux<Outcome.SummaryByDate> summaryByDate = outcomeClient.reportByDate(fromDate,
 				to);
-		List<Outcome.SummaryByParentCategory> summaryByParentCategory = outcomeClient
+		Flux<Outcome.SummaryByParentCategory> summaryByParentCategory = outcomeClient
 				.reportByParentCategory(fromDate, to);
 		// TODO use Report API
-		Resources<Income> incomes = incomeClient.findByIncomeDate(fromDate, to);
+		Flux<Income> incomes = incomeClient.findByIncomeDate(fromDate, to)
+				.flatMap(r -> Flux.fromIterable(r.getContent()));
 
-		long outcomeTotal = summaryByDate.stream()
-				.mapToLong(Outcome.SummaryByDate::getSubTotal).sum();
-		long incomeTotal = incomes.getContent().stream().mapToLong(Income::getAmount)
-				.sum();
+		Mono<Long> outcomeTotal = summaryByDate.reduce(0L, (x, s) -> x + s.getSubTotal())
+				.otherwiseReturn(0L);
+		Mono<Long> incomeTotal = incomes.reduce(0L, (x, s) -> x + s.getAmount());
+
+		summaryByDate.collect(Collectors.toList()).subscribe(x -> {
+			if (x.size() <= 31) {
+				model.addAttribute("outcomeSummaryByDate", x);
+			}
+			else {
+				model.addAttribute("outcomeSummaryByMonth", summarizeByMonth(x));
+			}
+		});
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", to);
-		if (summaryByDate.size() <= 31) {
-			model.addAttribute("outcomeSummaryByDate", summaryByDate);
-		}
-		else {
-			model.addAttribute("outcomeSummaryByMonth", summarizeByMonth(summaryByDate));
-		}
-		model.addAttribute("outcomeSummaryByParentCategory", summaryByParentCategory);
-		model.addAttribute("outcomeTotal", outcomeTotal);
-		model.addAttribute("incomeTotal", incomeTotal);
-		model.addAttribute("inout", incomeTotal - outcomeTotal);
+		model.addAttribute("outcomeSummaryByParentCategory",
+				summaryByParentCategory.toIterable());
+		model.addAttribute("outcomeTotal", outcomeTotal.block());
+		model.addAttribute("incomeTotal", incomeTotal.block());
+		model.addAttribute("inout", incomeTotal.block() - outcomeTotal.block());
 		model.addAttribute("user", user);
 		return "report";
 	}
 
-	List<Outcome.SummaryByDate> summarizeByMonth(List<Outcome.SummaryByDate> outcomes) {
+	List<Outcome.SummaryByDate> summarizeByMonth(
+			Collection<Outcome.SummaryByDate> outcomes) {
 		return outcomes.stream()
 				.collect(Collectors
 						.groupingBy(x -> LocalDate.of(x.getOutcomeDate().getYear(),

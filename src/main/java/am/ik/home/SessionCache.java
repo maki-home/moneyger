@@ -1,32 +1,38 @@
 package am.ik.home;
 
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 
 import java.net.URI;
-import java.util.*;
-import java.util.stream.StreamSupport;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.RequestEntity;
-import org.springframework.security.oauth2.client.OAuth2RestTemplate;
+import org.springframework.hateoas.MediaTypes;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.SessionScope;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.reactive.function.client.ClientRequest;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
 import am.ik.home.client.member.Member;
 import am.ik.home.client.member.MemberClient;
+import reactor.core.publisher.Flux;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
+import reactor.util.function.Tuples;
 
 @Component
 @SessionScope
 public class SessionCache {
 
 	@Autowired
-	OAuth2RestTemplate restTemplate;
+	WebClient webClient;
 	@Autowired
 	MemberClient memberClient;
 	@Value("${inout.uri}")
@@ -37,9 +43,19 @@ public class SessionCache {
 
 	@PostConstruct
 	public void init() {
-		this.outcomeCategories = Collections.unmodifiableMap(outcomeCategories());
-		this.incomeCategories = Collections.unmodifiableMap(incomeCategories());
-		this.members = Collections.unmodifiableMap(members());
+		Flux<Tuple3<String, Integer, String>> outcomeCategories = outcomeCategories();
+		Flux<Tuple2<Integer, String>> incomeCategories = incomeCategories();
+		Flux<Member> members = members();
+
+		this.outcomeCategories = outcomeCategories.toStream().collect(groupingBy(
+				Tuple2::getT1, LinkedHashMap::new,
+				toMap(Tuple3::getT2, Tuple3::getT3, (k, v) -> v, LinkedHashMap::new)));
+		this.incomeCategories = incomeCategories.toStream().collect(
+				toMap(Tuple2::getT1, Tuple2::getT2, (k, v) -> v, LinkedHashMap::new));
+		this.members = members.toStream()
+				.collect(toMap(Member::getMemberId,
+						m -> m.getFamilyName() + " " + m.getGivenName(), (k, v) -> v,
+						LinkedHashMap::new));
 	}
 
 	public Map<String, Map<Integer, String>> getOutcomeCategories() {
@@ -54,40 +70,29 @@ public class SessionCache {
 		return members;
 	}
 
-	private Map<String, Map<Integer, String>> outcomeCategories() {
-		JsonNode categories = restTemplate
-				.exchange(RequestEntity
-						.get(UriComponentsBuilder.fromUri(inoutUri)
-								.pathSegment("outcomeCategories").build().toUri())
-						.build(), JsonNode.class)
-				.getBody();
-		Map<String, Map<Integer, String>> cat = new LinkedHashMap<>();
-		for (JsonNode node : categories.get("_embedded").get("outcomeCategories")) {
-			String key = node.get("parentOutcomeCategory").get("parentCategoryName")
-					.asText();
-			cat.computeIfAbsent(key, x -> new LinkedHashMap<>());
-			cat.get(key).put(node.get("categoryId").asInt(),
-					node.get("categoryName").asText());
-		}
-		return cat;
+	private Flux<Tuple3<String, Integer, String>> outcomeCategories() {
+		ClientRequest<?> req = ClientRequest.GET(inoutUri + "/outcomeCategories")
+				.accept(MediaTypes.HAL_JSON).build();
+		return webClient.exchange(req).then(res -> res.bodyToMono(JsonNode.class))
+				.flatMap(node -> Flux.fromIterable(
+						node.get("_embedded").findPath("outcomeCategories")))
+				.map(c -> Tuples.of(
+						c.get("parentOutcomeCategory").get("parentCategoryName").asText(),
+						c.get("categoryId").asInt(), c.get("categoryName").asText()));
 	}
 
-	private Map<Integer, String> incomeCategories() {
-		JsonNode categories = restTemplate.exchange(
-				RequestEntity.get(UriComponentsBuilder.fromUri(inoutUri)
-						.pathSegment("incomeCategories").build().toUri()).build(),
-				JsonNode.class).getBody();
-		Map<Integer, String> cat = StreamSupport
-				.stream(Spliterators.spliteratorUnknownSize(
-						categories.get("_embedded").get("incomeCategories").elements(),
-						Spliterator.ORDERED), false)
-				.collect(toMap(node -> node.get("categoryId").asInt(),
-						node -> node.get("categoryName").asText()));
-		return cat;
+	private Flux<Tuple2<Integer, String>> incomeCategories() {
+		ClientRequest<?> req = ClientRequest.GET(inoutUri + "/incomeCategories")
+				.accept(MediaTypes.HAL_JSON).build();
+		return webClient.exchange(req).then(res -> res.bodyToMono(JsonNode.class))
+				.flatMap(node -> Flux
+						.fromIterable(node.get("_embedded").findPath("incomeCategories")))
+				.map(c -> Tuples.of(c.get("categoryId").asInt(),
+						c.get("categoryName").asText()));
+
 	}
 
-	private Map<String, String> members() {
-		return memberClient.findAll().getContent().stream().collect(toMap(
-				Member::getMemberId, m -> m.getFamilyName() + " " + m.getGivenName()));
+	private Flux<Member> members() {
+		return Flux.defer(() -> Flux.fromIterable(memberClient.findAll()));
 	}
 }
