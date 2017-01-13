@@ -1,0 +1,18 @@
+---
+applications:
+  - name: moneygr-dev
+    memory: 1g
+    instances: 1
+    path: target/moneygr-0.0.1-SNAPSHOT.jar
+    buildpack: java_buildpack_offline
+    services:
+    - income-outcome-rabbitmq
+    domains:
+      - cfapps.pez.pivotal.io
+    host: moneygr
+    env:
+      JAVA_OPTS: -Duser.timezone=Asia/Tokyo -Duser.language=ja -Duser.country=JP
+      auth-server: https://home.cfapps.pez.pivotal.io/uaa
+      inout.uri: https://income-outcome.cfapps.pez.pivotal.io/v1
+      security.oauth2.client.client-id: 6f747ee3-e933-40cd-93af-ae40780449c8
+      security.oauth2.client.client-secret: a0f6513e-ce22-42c8-bd1c-5d3498451042
