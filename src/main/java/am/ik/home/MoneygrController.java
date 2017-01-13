@@ -5,12 +5,8 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -223,18 +219,16 @@ public class MoneygrController {
 				.otherwiseReturn(0L);
 		Mono<Long> incomeTotal = incomes.reduce(0L, (x, s) -> x + s.getAmount());
 
-		model.addAttribute("fromDate", fromDate);
-		model.addAttribute("toDate", to);
-
-		summaryByDate.count().subscribe(c -> {
-			if (c <= 31) {
-				model.addAttribute("outcomeSummaryByDate", summaryByDate.toIterable());
+		summaryByDate.collect(Collectors.toList()).subscribe(x -> {
+			if (x.size() <= 31) {
+				model.addAttribute("outcomeSummaryByDate", x);
 			}
 			else {
-				model.addAttribute("outcomeSummaryByMonth",
-						summarizeByMonth(summaryByDate.toStream()));
+				model.addAttribute("outcomeSummaryByMonth", summarizeByMonth(x));
 			}
 		});
+		model.addAttribute("fromDate", fromDate);
+		model.addAttribute("toDate", to);
 		model.addAttribute("outcomeSummaryByParentCategory",
 				summaryByParentCategory.toIterable());
 		model.addAttribute("outcomeTotal", outcomeTotal.block());
@@ -244,8 +238,9 @@ public class MoneygrController {
 		return "report";
 	}
 
-	List<Outcome.SummaryByDate> summarizeByMonth(Stream<Outcome.SummaryByDate> outcomes) {
-		return outcomes
+	List<Outcome.SummaryByDate> summarizeByMonth(
+			Collection<Outcome.SummaryByDate> outcomes) {
+		return outcomes.stream()
 				.collect(Collectors
 						.groupingBy(x -> LocalDate.of(x.getOutcomeDate().getYear(),
 								x.getOutcomeDate().getMonth(), 1)))
