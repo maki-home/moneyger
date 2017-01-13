@@ -24,6 +24,15 @@ resources:
       organization: {{cf-org}}
       space: {{cf-space}}
       skip_cert_check: true
+  - name: cf-dev
+    type: cf
+    source:
+      api: {{cf-api}}
+      username: {{cf-username}}
+      password: {{cf-password}}
+      organization: {{cf-org}}
+      space: home-dev
+      skip_cert_check: true
   - name: m2
     type: docker-image
     source:
@@ -52,7 +61,7 @@ jobs:
         - get: m2
       - task: package
         file: repo-ci/ci/tasks/package.yml
-      - put: cf
+      - put: cf-dev
         params:
           manifest: repo/manifest-dev.yml
           path: output/app.jar
