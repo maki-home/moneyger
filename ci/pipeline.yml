@@ -5,6 +5,11 @@ resources:
     source:
       uri: https://github.com/maki-home/moneygr.git
       branch: master
+  - name: moneygr-ci
+    type: git
+    source:
+      uri: https://github.com/maki-home/moneygr.git
+      branch: develop
   - name: cf
     type: cf
     source:
@@ -21,10 +26,13 @@ resources:
 jobs:
   - name: moneygr-unit
     plan:
-      - get: repo
-        resource: moneygr-repo
-        trigger: true
-      - get: m2
+      - aggregate:
+        - get: repo
+          resource: moneygr-repo
+          trigger: true
+        - get: repo-ci
+          resource: moneygr-ci
+        - get: m2
       - task: unit
         config:
           platform: linux
@@ -35,20 +43,24 @@ jobs:
               tag: 8-jdk-alpine
           inputs:
             - name: repo
+            - name: repo-ci
             - name: m2
           run:
             path: sh
             args:
-            - repo/ci/tasks/unit.sh
+            - repo-ci/ci/tasks/unit.sh
           params:
             _JAVA_OPTIONS: -Duser.timezone=Asia/Tokyo -Duser.language=ja -Duser.country=JP -Djava.security.egd=file:/dev/./urandom
   - name: moneygr-deploy
     plan:
-      - get: repo
-        resource: moneygr-repo
-        trigger: true
-        passed: [ moneygr-unit ]
-      - get: m2
+      - aggregate:
+        - get: repo
+          resource: moneygr-repo
+          trigger: true
+          passed: [ moneygr-unit ]
+        - get: repo-ci
+          resource: moneygr-ci
+        - get: m2
       - task: package
         config:
           platform: linux
@@ -59,15 +71,16 @@ jobs:
               tag: 8-jdk-alpine
           inputs:
             - name: repo
+            - name: repo-ci
             - name: m2
           outputs:
             - name: output
           run:
             path: sh
             args:
-            - repo/ci/tasks/package.sh
+            - repo-ci/ci/tasks/package.sh
       - put: cf
         params:
-          manifest: moneygr-repo/manifest.yml
+          manifest: repo/manifest.yml
           path: output/app.jar
           current_app_name: moneygr
