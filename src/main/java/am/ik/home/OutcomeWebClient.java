@@ -72,7 +72,8 @@ public class OutcomeWebClient implements OutcomeClient {
 						.queryParam("fromDate", fromDate).queryParam("toDate", toDate)
 						.build().encode().toUri()).build();
 		return this.webClient.exchange(req)
-				.flatMap(res -> res.bodyToFlux(Outcome.SummaryByDate.class));
+				.flatMap(res -> res.bodyToFlux(Outcome.SummaryByDate.class))
+				.onErrorResumeWith(e -> Flux.empty());
 	}
 
 	@Override
@@ -83,6 +84,7 @@ public class OutcomeWebClient implements OutcomeClient {
 						.queryParam("fromDate", fromDate).queryParam("toDate", toDate)
 						.build().encode().toUri()).build();
 		return this.webClient.exchange(req)
-				.flatMap(res -> res.bodyToFlux(Outcome.SummaryByParentCategory.class));
+				.flatMap(res -> res.bodyToFlux(Outcome.SummaryByParentCategory.class))
+				.onErrorResumeWith(e -> Flux.empty());
 	}
 }
