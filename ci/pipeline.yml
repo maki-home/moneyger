@@ -31,7 +31,7 @@ resources:
       username: {{cf-username}}
       password: {{cf-password}}
       organization: {{cf-org}}
-      space: home-dev
+      space: {{cf-space}}
       skip_cert_check: true
   - name: m2
     type: docker-image
