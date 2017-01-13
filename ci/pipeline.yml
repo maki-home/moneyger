@@ -21,7 +21,8 @@ resources:
 jobs:
   - name: moneygr-unit
     plan:
-      - get: moneygr-repo
+      - get: repo
+        resource: moneygr-repo
         trigger: true
       - get: m2
       - task: unit
@@ -33,8 +34,7 @@ jobs:
               repository: java
               tag: 8-jdk-alpine
           inputs:
-            - name: moneygr-repo
-              path: repo
+            - name: repo
             - name: m2
           run:
             path: sh
@@ -44,7 +44,8 @@ jobs:
             _JAVA_OPTIONS: -Duser.timezone=Asia/Tokyo -Duser.language=ja -Duser.country=JP -Djava.security.egd=file:/dev/./urandom
   - name: moneygr-deploy
     plan:
-      - get: moneygr-repo
+      - get: repo
+        resource: moneygr-repo
         trigger: true
         passed: [ moneygr-unit ]
       - get: m2
@@ -57,8 +58,7 @@ jobs:
               repository: java
               tag: 8-jdk-alpine
           inputs:
-            - name: moneygr-repo
-              path: repo
+            - name: repo
             - name: m2
           outputs:
             - name: output
