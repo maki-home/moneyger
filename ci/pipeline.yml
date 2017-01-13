@@ -5,6 +5,11 @@ resources:
     source:
       uri: https://github.com/maki-home/moneygr.git
       branch: master
+  - name: moneygr-repo-dev
+    type: git
+    source:
+      uri: https://github.com/maki-home/moneygr.git
+      branch: develop
   - name: moneygr-ci
     type: git
     source:
@@ -24,6 +29,66 @@ resources:
     source:
       repository: making/home-m2
 jobs:
+  - name: moneygr-unit-dev
+    plan:
+      - aggregate:
+        - get: repo
+          resource: moneygr-repo-dev
+          trigger: true
+        - get: repo-ci
+          resource: moneygr-ci
+        - get: m2
+      - task: unit
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: java
+              tag: 8-jdk-alpine
+          inputs:
+            - name: repo
+            - name: repo-ci
+            - name: m2
+          run:
+            path: sh
+            args:
+            - repo-ci/ci/tasks/unit.sh
+          params:
+            _JAVA_OPTIONS: -Duser.timezone=Asia/Tokyo -Duser.language=ja -Duser.country=JP -Djava.security.egd=file:/dev/./urandom
+  - name: moneygr-deploy-dev
+    plan:
+      - aggregate:
+        - get: repo
+          resource: moneygr-repo-dev
+          trigger: true
+          passed: [ moneygr-unit-dev ]
+        - get: repo-ci
+          resource: moneygr-ci
+        - get: m2
+      - task: package
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: java
+              tag: 8-jdk-alpine
+          inputs:
+            - name: repo
+            - name: repo-ci
+            - name: m2
+          outputs:
+            - name: output
+          run:
+            path: sh
+            args:
+            - repo-ci/ci/tasks/package.sh
+      - put: cf
+        params:
+          manifest: repo/manifest-dev.yml
+          path: output/app.jar
+          current_app_name: moneygr-dev
   - name: moneygr-unit
     plan:
       - aggregate:
