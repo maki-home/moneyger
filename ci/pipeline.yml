@@ -59,7 +59,7 @@ resources:
       url: {{slack-webhook-url}}
 jobs:
   ### Dev
-  - name: moneygr-unit-dev
+  - name: unit-test-dev
     plan:
       - aggregate:
         - get: repo
@@ -82,7 +82,7 @@ jobs:
           resource: repo-dev
           trigger: true
           passed:
-          - moneygr-unit-dev
+          - unit-test-dev
         - get: utils
         - get: m2
       - task: deploy
@@ -96,7 +96,7 @@ jobs:
         params:
           NEXUS_USERNAME: {{nexus-username}}
           NEXUS_PASSWORD: {{nexus-password}}
-  - name: moneygr-deploy-dev
+  - name: deploy-to-cf-dev
     plan:
       - aggregate:
         - get: repo
@@ -130,14 +130,13 @@ jobs:
               <!here> :rotating_light: *$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME* failed with build <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|$BUILD_NAME>!
   ### Prod
   - name: merge-develop-to-master
-    public: true
     plan:
       - aggregate:
         - get: repo-other
           resource: repo-prod
         - get: repo-dev
           passed:
-          - moneygr-deploy-dev
+          - deploy-to-cf-dev
         - get: utils
       - task: merge-develop-to-master
         file: utils/tasks/merge-develop-to-other.yml
@@ -159,7 +158,7 @@ jobs:
             channel: '#concourse'
             text: |
               <!here> :rotating_light: *$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME* failed with build <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|$BUILD_NAME>!
-  - name: moneygr-unit-prod
+  - name: unit-test-prod
     plan:
       - aggregate:
         - get: repo
@@ -178,12 +177,11 @@ jobs:
             text: |
               <!here> :rotating_light: *$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME* failed with build <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|$BUILD_NAME>!
   - name: tag-master
-    public: true
     plan:
       - aggregate:
         - get: repo-prod
           passed:
-          - moneygr-unit-prod
+          - unit-test-prod
           trigger: true
         - get: repo-version
         - get: utils
@@ -230,7 +228,7 @@ jobs:
         params:
           NEXUS_USERNAME: {{nexus-username}}
           NEXUS_PASSWORD: {{nexus-password}}
-  - name: moneygr-deploy-prod
+  - name: deploy-to-cf-prod
     plan:
       - aggregate:
         - get: repo
@@ -275,7 +273,7 @@ jobs:
           resource: repo-dev
         - get: repo-prod
           passed:
-          - moneygr-deploy-prod
+          - deploy-to-cf-prod
           trigger: true
         - get: repo-version
           params:
