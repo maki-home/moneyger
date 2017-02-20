@@ -6,7 +6,7 @@ applications:
     path: target/moneygr-0.0.1-SNAPSHOT.jar
     buildpack: java_buildpack_offline
     services:
-    - income-outcome-rabbitmq-dev
+    - income-outcome-rabbitmq
     domains:
       - ik.am
       - cfapps.pez.pivotal.io
