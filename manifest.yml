@@ -11,7 +11,6 @@ applications:
     domains:
       - ik.am
       - cfapps.pez.pivotal.io
-    host: moneygr
     env:
       JAVA_OPTS: -Duser.timezone=Asia/Tokyo -Duser.language=ja -Duser.country=JP
       auth-server: https://home.cfapps.pez.pivotal.io/uaa
