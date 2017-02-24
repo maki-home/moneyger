@@ -9,7 +9,8 @@ applications:
     - income-outcome-rabbitmq
     - logstash
     domains:
-      - ik.am
+    - ik.am
+    - pezapp.io
     env:
       JAVA_OPTS: -Duser.timezone=Asia/Tokyo -Duser.language=ja -Duser.country=JP
       auth-server: https://home.ik.am
