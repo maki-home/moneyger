@@ -38,6 +38,9 @@
             <button class="uk-button">Go</button>
         </form>
         <h3>収支報告</h3>
+        <a th:href="@{/report(stack=true,fromDate=${fromDate},toDate=${toDate})}" th:unless="${stack}">積み上げる</a>
+        <a th:href="@{/report(stack=false,fromDate=${fromDate},toDate=${toDate})}" th:if="${stack}">積み上げない</a>
+        <div id="graph" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
         <table class="uk-table uk-table-condensed">
             <tbody>
             <tr>
@@ -58,7 +61,6 @@
         </table>
         <h3>支出</h3>
         <a th:href="@{/outcomes(fromDate=${fromDate},toDate=${toDate})}">この期間の全支出</a>
-
         <table class="uk-table uk-table-striped uk-table-condensed" th:if="${outcomeSummaryByDate != null}">
             <thead>
             <tr>
@@ -102,7 +104,7 @@
             </tr>
             </tfoot>
         </table>
-
+        <div id="categories" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
         <table class="uk-table uk-table-striped uk-table-condensed">
             <thead>
             <tr>
@@ -134,6 +136,12 @@
             </tr>
             </thead>
             <tbody>
+            <tr th:each="income : ${incomeSummaryByMonth}" th:if="${incomeSummaryByMonth != null}">
+                <td><a th:href="@{'/incomes/'(fromDate=${income.incomeDate})}"
+                       th:text="${income.incomeDate.year + '-' + income.incomeDate.monthValue}"></a>
+                </td>
+                <td><span th:text="${#numbers.formatInteger(income.subTotal, 3, 'COMMA')}"></span>円</td>
+            </tr>
             </tbody>
             <tfoot>
             <tr>
@@ -146,6 +154,122 @@
     <form th:action="@{/logout}" method="post" class="uk-form uk-margin-remove uk-display-inline-block">
         <button class="uk-button"><i class="uk-icon-sign-out"></i> Logout</button>
     </form>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script type="text/javascript" th:inline="javascript">/*<![CDATA[*/
+
+    (function () {
+        var outcomeGraphData = JSON.parse(/*[[${outcomeGraphData}]]*/ '[]');
+        var incomeGraphData = JSON.parse(/*[[${incomeGraphData}]]*/ '[]');
+        var stack = /*[[${stack}]]*/ false;
+
+        var categories = [];
+        var outcomes = [];
+        var incomes = [];
+        var outcomeStack = 0;
+        var incomeStack = 0;
+
+        for (var i = outcomeGraphData.length - 1; i >= 0; i--) {
+            var data = outcomeGraphData[i];
+            categories.push(data.outcomeDate);
+            outcomes.push(data.subTotal + (stack ? outcomeStack : 0));
+            if (incomeGraphData && incomeGraphData.length == outcomeGraphData.length) {
+                incomes.push(incomeGraphData[i].subTotal + (stack ? incomeStack : 0));
+            }
+            outcomeStack += data.subTotal;
+            incomeStack += incomeGraphData[i].subTotal;
+        }
+
+        Highcharts.chart('graph', {
+            chart: {
+                type: 'areaspline'
+            },
+            title: {
+                text: '収支レポート'
+            },
+            legend: {
+                layout: 'vertical',
+                align: 'left',
+                verticalAlign: 'top',
+                x: 150,
+                y: 100,
+                floating: true,
+                borderWidth: 1,
+                backgroundColor: '#FFFFFF'
+            },
+            xAxis: {
+                categories: categories
+            },
+            yAxis: {
+                title: {
+                    text: '円'
+                }
+            },
+            tooltip: {
+                shared: true,
+                valueSuffix: ' 円'
+            },
+            credits: {
+                enabled: false
+            },
+            plotOptions: {
+                areaspline: {
+                    fillOpacity: 0.5
+                }
+            },
+            series: [{
+                name: '収入',
+                data: incomes,
+                color: '#7cb5ec'
+            }, {
+                name: '支出',
+                data: outcomes,
+                color: '#f7a35c'
+            }]
+        });
+    })();
+
+    (function () {
+        var categoryGraphData = JSON.parse(/*[[${categoryGraphData}]]*/ '[]');
+        var data = [];
+        for (var i = 0; i < categoryGraphData.length; i++) {
+            var category = categoryGraphData[i];
+            data.push({
+                name: category.parentCategoryName,
+                y: category.subTotal
+            });
+        }
+        Highcharts.chart('categories', {
+            chart: {
+                plotBackgroundColor: null,
+                plotBorderWidth: null,
+                plotShadow: false,
+                type: 'pie'
+            },
+            title: {
+                text: 'カテゴリ内訳'
+            },
+            tooltip: {
+                shared: true,
+                valueSuffix: ' 円'
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: false
+                    },
+                    showInLegend: true
+                }
+            },
+            series: [{
+                name: 'カテゴリ名',
+                colorByPoint: true,
+                data: data
+            }]
+        });
+    })();
+    /*]]>*/</script>
 </div>
 </body>
 </html>

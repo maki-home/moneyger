@@ -1,14 +1,13 @@
 package am.ik.home;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.Cookie;
@@ -27,7 +26,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import am.ik.home.client.user.UaaUser;
+import lombok.Data;
 
 @Controller
 public class MoneygrController {
@@ -45,6 +47,8 @@ public class MoneygrController {
 	SessionCache cache;
 	@Value("${inout.uri}")
 	URI inoutUri;
+	@Autowired
+	ObjectMapper objectMapper;
 
 	@RequestMapping("/")
 	String index() {
@@ -189,15 +193,16 @@ public class MoneygrController {
 	}
 
 	@RequestMapping(path = "/report")
-	String report(Model model) {
+	String report(Model model, @RequestParam Optional<Boolean> stack) {
 		return report(model, LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()),
-				Optional.empty());
+				Optional.empty(), stack);
 	}
 
 	@RequestMapping(path = "/report", params = "fromDate")
 	String report(Model model,
 			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam LocalDate fromDate,
-			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate) {
+			@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam Optional<LocalDate> toDate,
+			@RequestParam Optional<Boolean> stack) {
 		LocalDate to = toDate
 				.orElseGet(() -> fromDate.with(TemporalAdjusters.lastDayOfMonth()));
 		List<Outcome.SummaryByDate> summaryByDate = outcomeClient.reportByDate(fromDate,
@@ -213,13 +218,37 @@ public class MoneygrController {
 				.sum();
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", to);
-		if (summaryByDate.size() <= 31) {
-			model.addAttribute("outcomeSummaryByDate", summaryByDate);
+		model.addAttribute("stack", stack.orElse(false));
+		try {
+			if (summaryByDate.size() <= 31) {
+				Collections.reverse(summaryByDate);
+				Collection<IncomeSummary> incomeSummaries = summarizeIncome(
+						incomes.getContent(), summaryByDate, false);
+				model.addAttribute("outcomeSummaryByDate", summaryByDate);
+				model.addAttribute("outcomeGraphData",
+						objectMapper.writeValueAsString(summaryByDate));
+				model.addAttribute("incomeGraphData",
+						objectMapper.writeValueAsString(incomeSummaries));
+			}
+			else {
+				List<Outcome.SummaryByDate> summaryByMonth = summarizeByMonth(
+						summaryByDate);
+				Collection<IncomeSummary> incomeSummaries = summarizeIncome(
+						incomes.getContent(), summaryByMonth, true);
+				model.addAttribute("outcomeSummaryByMonth", summaryByMonth);
+				model.addAttribute("incomeSummaryByMonth", incomeSummaries);
+				model.addAttribute("outcomeGraphData",
+						objectMapper.writeValueAsString(summaryByMonth));
+				model.addAttribute("incomeGraphData",
+						objectMapper.writeValueAsString(incomeSummaries));
+			}
+			model.addAttribute("outcomeSummaryByParentCategory", summaryByParentCategory);
+			model.addAttribute("categoryGraphData",
+					objectMapper.writeValueAsString(summaryByParentCategory));
 		}
-		else {
-			model.addAttribute("outcomeSummaryByMonth", summarizeByMonth(summaryByDate));
+		catch (IOException e) {
+			throw new UncheckedIOException(e);
 		}
-		model.addAttribute("outcomeSummaryByParentCategory", summaryByParentCategory);
 		model.addAttribute("outcomeTotal", outcomeTotal);
 		model.addAttribute("incomeTotal", incomeTotal);
 		model.addAttribute("inout", incomeTotal - outcomeTotal);
@@ -227,11 +256,36 @@ public class MoneygrController {
 		return "report";
 	}
 
+	@Data
+	class IncomeSummary {
+		private LocalDate incomeDate;
+		private Long subTotal = 0L;
+	}
+
+	Collection<IncomeSummary> summarizeIncome(Collection<Income> incomes,
+			List<Outcome.SummaryByDate> outcomes, boolean firstDayAsKey) {
+		// initialize
+		Map<LocalDate, IncomeSummary> sum = outcomes.stream().map(o -> {
+			IncomeSummary income = new IncomeSummary();
+			income.setIncomeDate(o.getOutcomeDate());
+			return income;
+		}).collect(Collectors.toMap(IncomeSummary::getIncomeDate, Function.identity(),
+				(u, v) -> v, LinkedHashMap::new));
+
+		incomes.forEach(income -> {
+			LocalDate incomeDate = income.getIncomeDate();
+			LocalDate key = firstDayAsKey
+					? LocalDate.of(incomeDate.getYear(), incomeDate.getMonth(), 1)
+					: incomeDate;
+			IncomeSummary summary = sum.getOrDefault(key, new IncomeSummary());
+			summary.setSubTotal(summary.getSubTotal() + income.getAmount());
+		});
+		return sum.values();
+	}
+
 	List<Outcome.SummaryByDate> summarizeByMonth(List<Outcome.SummaryByDate> outcomes) {
-		return outcomes.stream()
-				.collect(Collectors
-						.groupingBy(x -> LocalDate.of(x.getOutcomeDate().getYear(),
-								x.getOutcomeDate().getMonth(), 1)))
+		return outcomes.stream().collect(Collectors.groupingBy(x -> LocalDate
+				.of(x.getOutcomeDate().getYear(), x.getOutcomeDate().getMonth(), 1)))
 				.entrySet().stream()
 				.map(x -> new Outcome.SummaryByDate(x.getKey(),
 						x.getValue().stream().map(Outcome.SummaryByDate::getSubTotal)
