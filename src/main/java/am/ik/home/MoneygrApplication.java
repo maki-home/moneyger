@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
 import org.springframework.hateoas.hal.Jackson2HalModule;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.integration.annotation.IntegrationComponentScan;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -83,6 +84,9 @@ public class MoneygrApplication extends WebSecurityConfigurerAdapter {
 			OAuth2ClientContext context, HttpMessageConverters messageConverters) {
 		OAuth2RestTemplate restTemplate = new OAuth2RestTemplate(resource, context);
 		restTemplate.setMessageConverters(messageConverters.getConverters());
+		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+		requestFactory.setConnectTimeout(5_000);
+		restTemplate.setRequestFactory(requestFactory);
 		return restTemplate;
 	}
 
