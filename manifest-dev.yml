@@ -15,3 +15,4 @@ applications:
       inout.uri: https://income-outcome-dev.ik.am/v1
       security.oauth2.client.client-id: 00000000-0000-0000-0000-000000000000
       security.oauth2.client.client-secret: 00000000-0000-0000-0000-000000000000
+      server.error.include-stacktrace: always

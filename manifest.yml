@@ -17,3 +17,4 @@ applications:
       inout.uri: https://income-outcome.pezapp.io/v1
       security.oauth2.client.client-id: 6f747ee3-e933-40cd-93af-ae40780449c8
       security.oauth2.client.client-secret: a0f6513e-ce22-42c8-bd1c-5d3498451042
+      server.error.include-stacktrace: on_trace_param
